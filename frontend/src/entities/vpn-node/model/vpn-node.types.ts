@@ -44,12 +44,6 @@ export interface VpnNode {
     country_code: string | null;
 
     sort_order: number;
-
-    role:
-        | "exit"
-        | "gateway";
-
-    cdn_host: string | null;
 }
 
 export interface CreateVpnNodeDto {
