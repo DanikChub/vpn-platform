@@ -324,88 +324,7 @@ const NodeDetailsContent = ({
             </div>
 
 
-            <div className="grid gap-5 xl:grid-cols-2">
 
-                <Card>
-                    <CardContent>
-                        <CardTitle>
-                            Ресурсы сервера
-                        </CardTitle>
-
-                        <div className="mt-5 space-y-4">
-                            <DetailsRow
-                                label="CPU"
-                                value={
-                                    node.cpu_model ??
-                                    "Нет данных"
-                                }
-                            />
-
-                            <DetailsRow
-                                label="Количество CPU"
-                                value={
-                                    node.cpu_count ??
-                                    "Нет данных"
-                                }
-                            />
-
-                            <DetailsRow
-                                label="Память"
-                                value={
-                                    formatMemoryUsage(
-                                        node.memory_used,
-                                        node.memory_total,
-                                    )
-                                }
-                            />
-
-                            <DetailsRow
-                                label="Использовано памяти"
-                                value={
-                                    formatBytes(
-                                        node.memory_used,
-                                    )
-                                }
-                            />
-
-                            <DetailsRow
-                                label="Всего памяти"
-                                value={
-                                    formatBytes(
-                                        node.memory_total,
-                                    )
-                                }
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
-
-
-                <Card>
-                    <CardContent>
-                        <CardTitle>
-                            Gateway / CDN
-                        </CardTitle>
-
-                        <div className="mt-5 space-y-4">
-                            <DetailsRow
-                                label="Роль"
-                                value={
-                                    getRoleLabel(
-                                        node.role,
-                                    )
-                                }
-                            />
-
-                            <DetailsRow
-                                label="CDN host"
-                                value={
-                                    node.cdn_host ??
-                                    "Не используется"
-                                }
-                                monospace
-                            />
-                        </div>
                     </CardContent>
                 </Card>
 
@@ -901,22 +820,6 @@ function getNodeStatusLabel(
 }
 
 
-
-
-function getRoleLabel(
-    role: VpnNode["role"],
-): string {
-    switch (role) {
-        case "exit":
-            return "Exit node";
-
-        case "gateway":
-            return "Gateway";
-
-        default:
-            return "Неизвестно";
-    }
-}
 
 
 function formatBytes(
