@@ -108,15 +108,6 @@ const NodeDetailsContent = ({
                             />
 
                             <DetailsRow
-                                label="Роль"
-                                value={
-                                    getRoleLabel(
-                                        node.role,
-                                    )
-                                }
-                            />
-
-                            <DetailsRow
                                 label="Активна"
                                 value={
                                     node.is_active
@@ -158,15 +149,6 @@ const NodeDetailsContent = ({
                                 label="Название"
                                 value={
                                     node.name
-                                }
-                            />
-
-                            <DetailsRow
-                                label="Роль"
-                                value={
-                                    getRoleLabel(
-                                        node.role,
-                                    )
                                 }
                             />
 
@@ -324,9 +306,64 @@ const NodeDetailsContent = ({
             </div>
 
 
+            <div className="grid gap-5 xl:grid-cols-2">
 
+                <Card>
+                    <CardContent>
+                        <CardTitle>
+                            Ресурсы сервера
+                        </CardTitle>
+
+                        <div className="mt-5 space-y-4">
+                            <DetailsRow
+                                label="CPU"
+                                value={
+                                    node.cpu_model ??
+                                    "Нет данных"
+                                }
+                            />
+
+                            <DetailsRow
+                                label="Количество CPU"
+                                value={
+                                    node.cpu_count ??
+                                    "Нет данных"
+                                }
+                            />
+
+                            <DetailsRow
+                                label="Память"
+                                value={
+                                    formatMemoryUsage(
+                                        node.memory_used,
+                                        node.memory_total,
+                                    )
+                                }
+                            />
+
+                            <DetailsRow
+                                label="Использовано памяти"
+                                value={
+                                    formatBytes(
+                                        node.memory_used,
+                                    )
+                                }
+                            />
+
+                            <DetailsRow
+                                label="Всего памяти"
+                                value={
+                                    formatBytes(
+                                        node.memory_total,
+                                    )
+                                }
+                            />
+                        </div>
                     </CardContent>
                 </Card>
+
+
+                
 
             </div>
 
