@@ -137,12 +137,8 @@ class AgentNodeControlService
                     credential,
                 ),
 
-            ...(node.role === "exit"
-                ? {
-                    flow:
-                        "xtls-rprx-vision" as const,
-                }
-                : {}),
+            flow:
+                "xtls-rprx-vision" as const,
         };
     }
 }
