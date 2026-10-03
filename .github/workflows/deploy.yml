@@ -3,8 +3,7 @@ name: Deploy production
 on:
   push:
     branches:
-      - main
-
+      - mvp-production
   workflow_dispatch:
 
 permissions:
@@ -19,20 +18,16 @@ jobs:
   build-and-push:
     name: Build ${{ matrix.name }}
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
-
       matrix:
         include:
           - name: backend
             dockerfile: backend/Dockerfile
             image_name: vpn-backend
-
           - name: telegram-bot
             dockerfile: tg_bot/Dockerfile
             image_name: vpn-telegram-bot
-
           - name: frontend
             dockerfile: frontend/Dockerfile
             image_name: vpn-frontend
@@ -63,77 +58,88 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           push: true
-
           build-args: |
             ${{ matrix.name == 'frontend' && 'VITE_API_URL=https://api.iordan.bar/api' || '' }}
-
           tags: |
             ${{ env.IMAGE }}:${{ github.sha }}
             ${{ env.IMAGE }}:latest
-
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
 
-  deploy:
-    name: Deploy to server
+  deploy-main:
+    name: Deploy main server
     runs-on: ubuntu-latest
-    needs:
-      - build-and-push
-
+    needs: build-and-push
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Copy production Compose
+      - name: Copy main production files
         uses: appleboy/scp-action@v1
         with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          username: ${{ secrets.PRODUCTION_USER }}
-          key: ${{ secrets.PRODUCTION_SSH_KEY }}
-
+          host: ${{ secrets.MAIN_HOST }}
+          username: ${{ secrets.MAIN_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
           source: "docker-compose.production.yml,nginx/default.conf"
           target: /opt/vpn
 
-      - name: Deploy
+      - name: Deploy main
         uses: appleboy/ssh-action@v1
         env:
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE_TAG: ${{ github.sha }}
-
         with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          username: ${{ secrets.PRODUCTION_USER }}
-          key: ${{ secrets.PRODUCTION_SSH_KEY }}
-
+          host: ${{ secrets.MAIN_HOST }}
+          username: ${{ secrets.MAIN_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
           envs: GHCR_USERNAME,GHCR_TOKEN,IMAGE_TAG
-
           script: |
             set -Eeuo pipefail
-
             cd /opt/vpn
-
-            echo "$GHCR_TOKEN" |
-              docker login ghcr.io \
-                --username "$GHCR_USERNAME" \
-                --password-stdin
-
+            echo "$GHCR_TOKEN" | docker login ghcr.io --username "$GHCR_USERNAME" --password-stdin
             export IMAGE_TAG
+            docker compose --env-file .env -f docker-compose.production.yml pull
+            docker compose --env-file .env -f docker-compose.production.yml up -d --remove-orphans
+            docker compose --env-file .env -f docker-compose.production.yml ps
+            docker image prune -f
 
-            docker compose \
-              --env-file .env \
-              -f docker-compose.production.yml \
-              pull
+  deploy-bot:
+    name: Deploy Telegram bot
+    runs-on: ubuntu-latest
+    needs:
+      - build-and-push
+      - deploy-main
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
 
-            docker compose \
-              --env-file .env \
-              -f docker-compose.production.yml \
-              up -d \
-              --remove-orphans
+      - name: Copy bot production files
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.BOT_HOST }}
+          username: ${{ secrets.BOT_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: "docker-compose.bot.yml"
+          target: /opt/vpn
 
-            docker compose \
-              --env-file .env \
-              -f docker-compose.production.yml \
-              ps
-
+      - name: Deploy bot
+        uses: appleboy/ssh-action@v1
+        env:
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_TAG: ${{ github.sha }}
+        with:
+          host: ${{ secrets.BOT_HOST }}
+          username: ${{ secrets.BOT_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: GHCR_USERNAME,GHCR_TOKEN,IMAGE_TAG
+          script: |
+            set -Eeuo pipefail
+            cd /opt/vpn
+            echo "$GHCR_TOKEN" | docker login ghcr.io --username "$GHCR_USERNAME" --password-stdin
+            export IMAGE_TAG
+            docker compose --env-file .env -f docker-compose.bot.yml pull
+            docker compose --env-file .env -f docker-compose.bot.yml up -d --remove-orphans
+            docker compose --env-file .env -f docker-compose.bot.yml ps
             docker image prune -f
