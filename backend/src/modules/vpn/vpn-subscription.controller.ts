@@ -171,6 +171,9 @@ class VpnSubscriptionController {
 
                 "support-url":
                     "https://t.me/vpn_iordan_bot",
+
+                "tun-type":
+                    "tun2proxy",
             })
             .json(
                 configs,
