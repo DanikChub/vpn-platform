@@ -13,3 +13,13 @@ export {
 export {
     formatMoney,
 } from "./formatMoney";
+
+export {
+    DialogContext,
+    useDialog,
+} from "./dialog";
+
+export type {
+    ConfirmOptions,
+    DialogContextValue,
+} from "./dialog";

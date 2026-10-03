@@ -1,7 +1,6 @@
 import {
     useState,
 } from "react";
-
 import {
     Ban,
     CalendarPlus,
@@ -13,7 +12,9 @@ import {
 import type {
     UserDetails,
 } from "@/entities/user";
-
+import {
+    useDialog,
+} from "@/shared/lib";
 import {
     Badge,
     Button,
@@ -25,24 +26,10 @@ import {
     CardTitle,
 } from "@/shared/ui";
 
-import useManageUserSubscription
-    from "../model";
-
+import useManageUserSubscription from "../model";
 import {
     ExtendSubscriptionModal,
 } from "./ExtendSubscriptionModal";
-
-import {
-    ConfirmSubscriptionActionModal,
-} from "./ConfirmSubscriptionActionModal";
-
-
-type OpenModal =
-    | "extend"
-    | "expire"
-    | "block"
-    | "unblock"
-    | null;
 
 
 interface ManageUserSubscriptionProps {
@@ -54,20 +41,18 @@ export function ManageUserSubscription({
                                            user,
                                        }: ManageUserSubscriptionProps) {
     const [
-        openModal,
-        setOpenModal,
-    ] =
-        useState<OpenModal>(
-            null
-        );
+        isExtendOpen,
+        setIsExtendOpen,
+    ] = useState(false);
+
+    const { confirm } = useDialog();
 
     const {
         status,
         actions,
-    } =
-        useManageUserSubscription({
-            userId: user.id,
-        });
+    } = useManageUserSubscription({
+        userId: user.id,
+    });
 
     const subscription =
         user.subscription;
@@ -82,8 +67,7 @@ export function ManageUserSubscription({
         "expired" ||
         new Date(
             subscription.expiresAt
-        ).getTime() <=
-        Date.now();
+        ).getTime() <= Date.now();
 
     const hasActiveSubscription =
         Boolean(
@@ -94,11 +78,36 @@ export function ManageUserSubscription({
         );
 
 
-    const closeModal = (): void => {
-        if (!status.isLoading) {
-            setOpenModal(null);
-        }
-    };
+    const runConfirmedAction =
+        async ({
+                   title,
+                   description,
+                   confirmText,
+                   action,
+                   variant = "danger",
+               }: {
+            title: string;
+            description: string;
+            confirmText: string;
+            action: () => Promise<boolean>;
+            variant?: "default" | "danger";
+        }): Promise<void> => {
+            actions.clearError();
+
+            const confirmed =
+                await confirm({
+                    title,
+                    description,
+                    confirmText,
+                    variant,
+                });
+
+            if (!confirmed) {
+                return;
+            }
+
+            await action();
+        };
 
 
     return (
@@ -117,17 +126,9 @@ export function ManageUserSubscription({
                         </div>
 
                         <SubscriptionStatusBadge
-                            hasSubscription={
-                                Boolean(
-                                    subscription
-                                )
-                            }
-                            isActive={
-                                hasActiveSubscription
-                            }
-                            isBlocked={
-                                isBlocked
-                            }
+                            hasSubscription={Boolean(subscription)}
+                            isActive={hasActiveSubscription}
+                            isBlocked={isBlocked}
                         />
                     </div>
                 </CardHeader>
@@ -138,9 +139,7 @@ export function ManageUserSubscription({
                             className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
                             role="alert"
                         >
-                            {
-                                status.errorMessage
-                            }
+                            {status.errorMessage}
                         </div>
                     )}
 
@@ -157,17 +156,13 @@ export function ManageUserSubscription({
 
                 <CardFooter className="flex-wrap">
                     <Button
-                        disabled={
-                            status.isLoading
-                        }
+                        disabled={status.isLoading}
                         leftIcon={
                             <CalendarPlus className="size-4" />
                         }
                         onClick={() => {
                             actions.clearError();
-                            setOpenModal(
-                                "extend"
-                            );
+                            setIsExtendOpen(true);
                         }}
                     >
                         {!subscription
@@ -180,17 +175,17 @@ export function ManageUserSubscription({
                     {hasActiveSubscription && (
                         <>
                             <Button
-                                disabled={
-                                    status.isLoading
-                                }
+                                disabled={status.isLoading}
                                 leftIcon={
                                     <Ban className="size-4" />
                                 }
                                 onClick={() => {
-                                    actions.clearError();
-                                    setOpenModal(
-                                        "block"
-                                    );
+                                    void runConfirmedAction({
+                                        title: "Заблокировать подписку?",
+                                        description: "VPN-доступ будет отозван, но оставшийся срок подписки сохранится.",
+                                        confirmText: "Заблокировать",
+                                        action: actions.blockSubscription,
+                                    });
                                 }}
                                 variant="outline"
                             >
@@ -198,17 +193,17 @@ export function ManageUserSubscription({
                             </Button>
 
                             <Button
-                                disabled={
-                                    status.isLoading
-                                }
+                                disabled={status.isLoading}
                                 leftIcon={
                                     <CircleX className="size-4" />
                                 }
                                 onClick={() => {
-                                    actions.clearError();
-                                    setOpenModal(
-                                        "expire"
-                                    );
+                                    void runConfirmedAction({
+                                        title: "Завершить подписку?",
+                                        description: "Подписка будет завершена немедленно, а VPN-доступ пользователя будет отозван.",
+                                        confirmText: "Завершить подписку",
+                                        action: actions.expireSubscription,
+                                    });
                                 }}
                                 variant="danger"
                             >
@@ -220,17 +215,18 @@ export function ManageUserSubscription({
                     {isBlocked && (
                         <>
                             <Button
-                                disabled={
-                                    status.isLoading
-                                }
+                                disabled={status.isLoading}
                                 leftIcon={
                                     <ShieldCheck className="size-4" />
                                 }
                                 onClick={() => {
-                                    actions.clearError();
-                                    setOpenModal(
-                                        "unblock"
-                                    );
+                                    void runConfirmedAction({
+                                        title: "Разблокировать подписку?",
+                                        description: "Если срок подписки ещё действует, VPN-доступ пользователя будет восстановлен.",
+                                        confirmText: "Разблокировать",
+                                        action: actions.unblockSubscription,
+                                        variant: "default",
+                                    });
                                 }}
                                 variant="secondary"
                             >
@@ -238,17 +234,17 @@ export function ManageUserSubscription({
                             </Button>
 
                             <Button
-                                disabled={
-                                    status.isLoading
-                                }
+                                disabled={status.isLoading}
                                 leftIcon={
                                     <CircleX className="size-4" />
                                 }
                                 onClick={() => {
-                                    actions.clearError();
-                                    setOpenModal(
-                                        "expire"
-                                    );
+                                    void runConfirmedAction({
+                                        title: "Завершить подписку?",
+                                        description: "Подписка будет завершена немедленно и её нельзя будет восстановить разблокировкой.",
+                                        confirmText: "Завершить подписку",
+                                        action: actions.expireSubscription,
+                                    });
                                 }}
                                 variant="danger"
                             >
@@ -260,88 +256,18 @@ export function ManageUserSubscription({
             </Card>
 
             <ExtendSubscriptionModal
-                hasSubscription={
-                    Boolean(
-                        subscription
-                    )
-                }
+                hasSubscription={Boolean(subscription)}
                 isLoading={
                     status.activeAction ===
                     "extend"
                 }
-                isOpen={
-                    openModal ===
-                    "extend"
-                }
-                onClose={
-                    closeModal
-                }
-                onSubmit={
-                    actions.extendSubscription
-                }
-            />
-
-            <ConfirmSubscriptionActionModal
-                confirmLabel="Завершить подписку"
-                description="Подписка будет завершена немедленно, а VPN-доступ пользователя будет отозван."
-                isLoading={
-                    status.activeAction ===
-                    "expire"
-                }
-                isOpen={
-                    openModal ===
-                    "expire"
-                }
-                onClose={
-                    closeModal
-                }
-                onConfirm={
-                    actions.expireSubscription
-                }
-                title="Завершить подписку?"
-                variant="danger"
-            />
-
-            <ConfirmSubscriptionActionModal
-                confirmLabel="Заблокировать"
-                description="VPN-доступ будет отозван, но оставшийся срок подписки сохранится."
-                isLoading={
-                    status.activeAction ===
-                    "block"
-                }
-                isOpen={
-                    openModal ===
-                    "block"
-                }
-                onClose={
-                    closeModal
-                }
-                onConfirm={
-                    actions.blockSubscription
-                }
-                title="Заблокировать подписку?"
-                variant="danger"
-            />
-
-            <ConfirmSubscriptionActionModal
-                confirmLabel="Разблокировать"
-                description="Если срок подписки ещё действует, VPN-доступ пользователя будет восстановлен."
-                isLoading={
-                    status.activeAction ===
-                    "unblock"
-                }
-                isOpen={
-                    openModal ===
-                    "unblock"
-                }
-                onClose={
-                    closeModal
-                }
-                onConfirm={
-                    actions.unblockSubscription
-                }
-                title="Разблокировать подписку?"
-                variant="primary"
+                isOpen={isExtendOpen}
+                onClose={() => {
+                    if (!status.isLoading) {
+                        setIsExtendOpen(false);
+                    }
+                }}
+                onSubmit={actions.extendSubscription}
             />
         </>
     );

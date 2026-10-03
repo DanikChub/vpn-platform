@@ -6,46 +6,43 @@ import type {
     CreatePlanPayload,
     Plan,
 } from "@/entities/plan";
-
+import {
+    useDialog,
+} from "@/shared/lib";
 import {
     Button,
 } from "@/shared/ui";
 
-import useManagePlan
-    from "../model";
-
+import useManagePlan from "../model";
 import {
     PlanFormModal,
 } from "./PlanFormModal";
 
-import {
-    DeletePlanModal,
-} from "./DeletePlanModal";
-
 
 interface ManagePlanProps {
     formPlan: Plan | null;
-    deletingPlan: Plan | null;
     isFormOpen: boolean;
     onOpenCreate: () => void;
     onCloseForm: () => void;
-    onCloseDelete: () => void;
+    planToDelete: Plan | null;
+    onDeleteFinished: () => void;
 }
 
 
 export function ManagePlan({
                                formPlan,
-                               deletingPlan,
                                isFormOpen,
                                onOpenCreate,
                                onCloseForm,
-                               onCloseDelete,
+                               planToDelete,
+                               onDeleteFinished,
                            }: ManagePlanProps) {
+    const { confirm } = useDialog();
+
     const {
         status,
         actions,
-    } =
-        useManagePlan();
+    } = useManagePlan();
 
 
     const submitPlan = (
@@ -64,12 +61,40 @@ export function ManagePlan({
     };
 
 
+    const confirmDelete =
+        async (plan: Plan): Promise<void> => {
+            const confirmed =
+                await confirm({
+                    title: "Удалить тариф?",
+                    description: `Тариф «${plan.name}» будет удалён без возможности восстановления. Тариф с существующими заказами удалить нельзя.`,
+                    confirmText: "Удалить тариф",
+                    variant: "danger",
+                });
+
+            if (!confirmed) {
+                onDeleteFinished();
+                return;
+            }
+
+            await actions.deletePlan(
+                plan.id
+            );
+
+            onDeleteFinished();
+        };
+
+
+    if (planToDelete) {
+        void confirmDelete(
+            planToDelete
+        );
+    }
+
+
     return (
         <>
             <Button
-                disabled={
-                    status.isLoading
-                }
+                disabled={status.isLoading}
                 leftIcon={
                     <Plus className="size-4" />
                 }
@@ -97,38 +122,10 @@ export function ManagePlan({
                     status.activeAction ===
                     "update"
                 }
-                isOpen={
-                    isFormOpen
-                }
-                onClose={
-                    onCloseForm
-                }
-                onSubmit={
-                    submitPlan
-                }
-                plan={
-                    formPlan
-                }
-            />
-
-            <DeletePlanModal
-                isLoading={
-                    status.activeAction ===
-                    "delete"
-                }
-                isOpen={
-                    deletingPlan !==
-                    null
-                }
-                onClose={
-                    onCloseDelete
-                }
-                onConfirm={
-                    actions.deletePlan
-                }
-                plan={
-                    deletingPlan
-                }
+                isOpen={isFormOpen}
+                onClose={onCloseForm}
+                onSubmit={submitPlan}
+                plan={formPlan}
             />
         </>
     );
