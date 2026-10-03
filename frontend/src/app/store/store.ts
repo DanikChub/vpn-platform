@@ -1,17 +1,31 @@
-import { configureStore } from "@reduxjs/toolkit";
+import {
+    configureStore,
+} from "@reduxjs/toolkit";
 
-import { baseApi } from "@/shared/api";
+import {
+    authReducer,
+} from "@/features/auth";
+import {
+    baseApi,
+} from "@/shared/api";
 
 
-export const store = configureStore({
-    reducer: {
-        [baseApi.reducerPath]: baseApi.reducer,
-    },
+export const store =
+    configureStore({
+        reducer: {
+            auth: authReducer,
+            [baseApi.reducerPath]:
+                baseApi.reducer,
+        },
 
-    middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware()
-            .concat(baseApi.middleware),
-});
+        middleware: (
+            getDefaultMiddleware
+        ) =>
+            getDefaultMiddleware()
+                .concat(
+                    baseApi.middleware
+                ),
+    });
 
 
 export type RootState =

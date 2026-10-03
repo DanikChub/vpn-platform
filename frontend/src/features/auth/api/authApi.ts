@@ -1,5 +1,5 @@
 import {
-    apiClient,
+    baseApi,
 } from "@/shared/api";
 
 import type {
@@ -8,28 +8,33 @@ import type {
     MeResponse,
 } from "../model/auth.types";
 
-async function login(
-    credentials: LoginCredentials
-): Promise<LoginResponse> {
-    const response =
-        await apiClient.post<LoginResponse>(
-            "/admin/auth/login",
-            credentials
-        );
 
-    return response.data;
-}
+export const authApi =
+    baseApi.injectEndpoints({
+        endpoints: (builder) => ({
+            login: builder.mutation<
+                LoginResponse,
+                LoginCredentials
+            >({
+                query: (credentials) => ({
+                    url: "/admin/auth/login",
+                    method: "POST",
+                    data: credentials,
+                }),
+            }),
 
-async function getMe(): Promise<MeResponse> {
-    const response =
-        await apiClient.get<MeResponse>(
-            "/admin/auth/me"
-        );
+            getMe: builder.query<
+                MeResponse,
+                void
+            >({
+                query: () => ({
+                    url: "/admin/auth/me",
+                }),
+            }),
+        }),
+    });
 
-    return response.data;
-}
 
-export const authApi = {
-    login,
-    getMe,
-};
+export const {
+    useLoginMutation,
+} = authApi;

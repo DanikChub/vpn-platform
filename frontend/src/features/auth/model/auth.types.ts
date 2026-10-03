@@ -20,17 +20,3 @@ export type AuthStatus =
     | "initializing"
     | "authenticated"
     | "unauthenticated";
-
-export interface AuthContextValue {
-    admin: Admin | null;
-    status: AuthStatus;
-
-    isAuthenticated: boolean;
-    isInitializing: boolean;
-
-    login: (
-        credentials: LoginCredentials
-    ) => Promise<void>;
-
-    logout: () => void;
-}

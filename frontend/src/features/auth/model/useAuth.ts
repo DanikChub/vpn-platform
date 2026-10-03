@@ -1,24 +1,105 @@
 import {
-    useContext,
+    useCallback,
 } from "react";
-
 import {
-    AuthContext,
-} from "./AuthContext";
+    useDispatch,
+    useSelector,
+} from "react-redux";
 
 import type {
-    AuthContextValue,
+    AppDispatch,
+    RootState,
+} from "@/app/store";
+import {
+    baseApi,
+} from "@/shared/api";
+import {
+    tokenStorage,
+} from "@/shared/lib";
+
+import {
+    authApi,
+} from "../api/authApi";
+import {
+    sessionAuthenticated,
+    sessionUnauthenticated,
+} from "./auth.slice";
+import type {
+    LoginCredentials,
 } from "./auth.types";
 
-export function useAuth(): AuthContextValue {
-    const context =
-        useContext(AuthContext);
 
-    if (!context) {
-        throw new Error(
-            "useAuth должен использоваться внутри AuthProvider"
+export function useAuth() {
+    const dispatch =
+        useDispatch<AppDispatch>();
+
+    const {
+        admin,
+        status,
+    } = useSelector(
+        (state: RootState) =>
+            state.auth
+    );
+
+
+    const login =
+        useCallback(
+            async (
+                credentials: LoginCredentials
+            ): Promise<void> => {
+                const response =
+                    await dispatch(
+                        authApi.endpoints.login.initiate(
+                            credentials
+                        )
+                    ).unwrap();
+
+                tokenStorage.setToken(
+                    response.accessToken
+                );
+
+                dispatch(
+                    sessionAuthenticated(
+                        response.admin
+                    )
+                );
+            },
+            [
+                dispatch,
+            ]
         );
-    }
 
-    return context;
+
+    const logout =
+        useCallback(
+            (): void => {
+                tokenStorage.removeToken();
+
+                dispatch(
+                    sessionUnauthenticated()
+                );
+
+                dispatch(
+                    baseApi.util.resetApiState()
+                );
+            },
+            [
+                dispatch,
+            ]
+        );
+
+
+    return {
+        admin,
+        status,
+
+        isAuthenticated:
+            status === "authenticated",
+
+        isInitializing:
+            status === "initializing",
+
+        login,
+        logout,
+    };
 }

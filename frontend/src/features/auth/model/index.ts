@@ -1,21 +1,16 @@
 export {
-    authApi,
-} from "./api/authApi";
-
-export {
     authReducer,
     sessionAuthenticated,
     sessionUnauthenticated,
-    useAuth,
-} from "./model";
+} from "./auth.slice";
 
 export {
-    LoginForm,
-} from "./ui/LoginForm";
+    useAuth,
+} from "./useAuth";
 
 export type {
     AuthStatus,
     LoginCredentials,
     LoginResponse,
     MeResponse,
-} from "./model";
+} from "./auth.types";

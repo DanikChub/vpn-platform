@@ -11,9 +11,8 @@ import {
 } from "@/app/store";
 
 import {
-    AuthProvider,
-} from "@/features/auth";
-
+    AuthSessionInitializer,
+} from "./AuthSessionInitializer";
 import {
     DialogProvider,
 } from "./DialogProvider";
@@ -24,11 +23,11 @@ export function AppProviders({
                              }: PropsWithChildren) {
     return (
         <Provider store={store}>
-            <DialogProvider>
-                <AuthProvider>
+            <AuthSessionInitializer>
+                <DialogProvider>
                     {children}
-                </AuthProvider>
-            </DialogProvider>
+                </DialogProvider>
+            </AuthSessionInitializer>
         </Provider>
     );
 }
