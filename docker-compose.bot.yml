@@ -1,0 +1,7 @@
+services:
+  telegram-bot:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/vpn-telegram-bot:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      BACKEND_API_URL: ${BACKEND_API_URL}
