@@ -810,6 +810,9 @@ function NodeConnectionSettings({
     const [sshUser, setSshUser] =
         useState(node.ssh_user);
 
+    const [inboundTag, setInboundTag] =
+        useState(node.inbound_tag);
+
     const [updateVpnNodeField, { isLoading: isSaving }] =
         useUpdateVpnNodeFieldMutation();
 
@@ -1133,6 +1136,9 @@ function InstallAgentButton({
                             }: InstallAgentButtonProps) {
     const [isOpen, setIsOpen] =
         useState(false);
+
+    const [sshPassword, setSshPassword] =
+        useState("");
 
     const [installAgent, { isLoading: isInstalling }] =
         useInstallVpnNodeAgentMutation();
