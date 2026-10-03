@@ -1,6 +1,7 @@
 import User from "./user.model";
 import balanceService from "../balances/balance.service";
 import MarketingSource from "../marketing-sources/marketing-source.model";
+import subscriptionService from "../subscriptions/subscription.service";
 
 
 interface FindOrCrateTelegramUserPayload {
@@ -94,6 +95,13 @@ class UserService {
                 marketingSourceId;
 
             await user.save();
+        }
+
+        if (created) {
+            await subscriptionService.extend(
+                user.id,
+                30
+            );
         }
 
         return user;
