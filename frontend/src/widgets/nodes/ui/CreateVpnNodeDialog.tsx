@@ -7,16 +7,8 @@ import {
     Input,
     Modal,
 } from "@/shared/ui";
+import {type CreateVpnNodeDto, useCreateVpnNodeMutation} from "@/entities/vpn-node";
 
-import {
-    vpnNodeApi,
-    type CreateVpnNodeDto,
-} from "@/entities/vpn-node";
-
-
-interface CreateVpnNodeModalProps {
-    onCreated: () => void;
-}
 
 
 const initialForm: CreateVpnNodeDto = {
@@ -36,16 +28,16 @@ const initialForm: CreateVpnNodeDto = {
 
 
 
-const CreateVpnNodeModal = ({
-                                onCreated,
-                            }: CreateVpnNodeModalProps) => {
+const CreateVpnNodeModal = () => {
 
     const [isOpen, setIsOpen] =
         useState(false);
 
 
-    const [isLoading, setIsLoading] =
-        useState(false);
+    const [
+        createVpnNode,
+        { isLoading },
+    ] = useCreateVpnNodeMutation();
 
 
     const [form, setForm] =
@@ -69,32 +61,10 @@ const CreateVpnNodeModal = ({
 
 
     async function handleSubmit() {
+        await createVpnNode(form).unwrap();
 
-        setIsLoading(true);
-
-        try {
-
-            await vpnNodeApi.create(
-                form,
-            );
-
-
-            setIsOpen(false);
-
-
-            setForm(
-                initialForm,
-            );
-
-
-            onCreated();
-
-
-        } finally {
-
-            setIsLoading(false);
-
-        }
+        setIsOpen(false);
+        setForm(initialForm);
     }
 
 

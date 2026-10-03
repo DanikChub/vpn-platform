@@ -1,7 +1,7 @@
 import type {EditableNodeField, VpnNode} from "@/entities/vpn-node/model";
 import {apiClient} from "@/shared/api";
 import type {CreateVpnNodeDto} from "@/entities/vpn-node/model";
-
+import { baseApi } from "@/shared/api";
 
 
 export const vpnNodeApi = {
@@ -78,3 +78,43 @@ export const vpnNodeApi = {
         );
     },
 };
+
+export const vpnNodeRtkApi = baseApi.injectEndpoints({
+    endpoints: (builder) => ({
+        getVpnNodes: builder.query<VpnNode[], void>({
+            query: () => ({
+                url: "/admin/nodes",
+            }),
+
+            providesTags: ["VpnNode"],
+        }),
+
+        deleteVpnNode: builder.mutation<void, number>({
+            query: (nodeId) => ({
+                url: `/admin/nodes/${nodeId}`,
+                method: "DELETE",
+            }),
+
+            invalidatesTags: ["VpnNode"],
+        }),
+        createVpnNode: builder.mutation<
+            VpnNode,
+            CreateVpnNodeDto
+        >({
+            query: (data) => ({
+                url: "/admin/nodes",
+                method: "POST",
+                data,
+            }),
+
+            invalidatesTags: ["VpnNode"],
+        }),
+    }),
+});
+
+
+export const {
+    useGetVpnNodesQuery,
+    useDeleteVpnNodeMutation,
+    useCreateVpnNodeMutation,
+} = vpnNodeRtkApi;

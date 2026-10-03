@@ -3,6 +3,14 @@ import type {
 } from "react";
 
 import {
+    Provider,
+} from "react-redux";
+
+import {
+    store,
+} from "@/app/store";
+
+import {
     AuthProvider,
 } from "@/features/auth";
 
@@ -10,8 +18,10 @@ export function AppProviders({
                                  children,
                              }: PropsWithChildren) {
     return (
-        <AuthProvider>
-            {children}
-        </AuthProvider>
+        <Provider store={store}>
+            <AuthProvider>
+                {children}
+            </AuthProvider>
+        </Provider>
     );
 }

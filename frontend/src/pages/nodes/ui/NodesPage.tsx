@@ -10,14 +10,9 @@ import {
     PageHeader,
 } from "@/shared/ui";
 import CreateVpnNodeModal from "@/widgets/nodes/ui/CreateVpnNodeDialog.tsx";
-import {useRef} from "react";
 
 
 const NodesPage = () => {
-    const refetchNodes =
-        useRef<
-            (() => Promise<void>) | null
-        >(null);
 
     return (
         <Page>
@@ -32,26 +27,14 @@ const NodesPage = () => {
                 title="Узлы"
 
                 actions={
-                    <CreateVpnNodeModal
-
-                        onCreated={() => {
-
-                            void refetchNodes.current?.();
-
-                        }}
-
-                    />
+                    <CreateVpnNodeModal/>
                 }
             />
 
 
             <PageContent>
 
-                <NodesList
-                    onRefetchReady={(refetch) => {
-                        refetchNodes.current = refetch;
-                    }}
-                />
+                <NodesList/>
 
             </PageContent>
 

@@ -1,44 +1,38 @@
-import useNodesList from "@/widgets/nodes/model";
-import {useEffect} from "react";
-import NodesListContent from "@/widgets/nodes/ui/NodesListContent.tsx";
+import {
+    useDeleteVpnNodeMutation,
+    useGetVpnNodesQuery,
+} from "@/entities/vpn-node";
 import {getNodeDetailsPath} from "@/shared/config/routePaths.ts";
 import {useNavigate} from "react-router-dom";
-import {vpnNodeApi} from "@/entities/vpn-node";
+import AsyncContent from "@/shared/ui/AsyncContent/AsyncContent.tsx";
+import {Server} from "lucide-react";
+import NodesTable from "@/widgets/nodes/ui/NodesTable.tsx";
 
-interface NodesListProps {
-    onRefetchReady?: (
-        refetch: () => Promise<void>
-    ) => void;
-}
 
-const NodesList = ({
-                       onRefetchReady,
-                   }: NodesListProps) => {
 
+const NodesList = () => {
     const navigate = useNavigate();
 
     const {
-        nodes,
-        status,
-        refetch,
-    } = useNodesList();
+        data: nodes = [],
+        isLoading,
+        error,
+    } = useGetVpnNodesQuery();
 
-
-    useEffect(() => {
-        onRefetchReady?.(refetch);
-    }, []);
+    const [deleteVpnNode] =
+        useDeleteVpnNodeMutation();
 
     const openNode = (
-        nodeId: number
-    ): void => {
+        nodeId: number,
+    ) => {
         navigate(
-            getNodeDetailsPath(nodeId)
+            getNodeDetailsPath(nodeId),
         );
     };
 
     const deleteNode = async (
         nodeId: number,
-    ): Promise<void> => {
+    ) => {
         const node =
             nodes.find(
                 (item) =>
@@ -59,22 +53,32 @@ const NodesList = ({
             return;
         }
 
-        await vpnNodeApi.delete(
+        await deleteVpnNode(
             nodeId,
-        );
-
-        await refetch();
+        ).unwrap();
     };
 
-
     return (
-        <NodesListContent
-            isLoading={status.isLoading}
-            errorMessage={status.errorMessage}
-            nodes={nodes}
-            onOpenNode={openNode}
-            onDeleteNode={deleteNode}
-        />
+        <AsyncContent
+            isLoading={isLoading}
+            errorMessage={
+                error
+                    ? "Не удалось загрузить ноды"
+                    : null
+            }
+            isEmpty={nodes.length === 0}
+            emptyTitle="Серверы не найдены"
+            emptyDescription="Добавьте первый VPN-сервер."
+            emptyIcon={
+                <Server className="size-6" />
+            }
+        >
+            <NodesTable
+                nodes={nodes}
+                onOpenNode={openNode}
+                onDeleteNode={deleteNode}
+            />
+        </AsyncContent>
     );
 };
 

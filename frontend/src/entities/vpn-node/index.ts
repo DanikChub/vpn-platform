@@ -3,6 +3,9 @@ import {VpnNodeStatusBadge} from "./ui/VpnNodeStatusBadge";
 
 export {
     vpnNodeApi,
+    useGetVpnNodesQuery,
+    useDeleteVpnNodeMutation,
+    useCreateVpnNodeMutation
 } from "./api";
 
 
