@@ -14,14 +14,21 @@ import {
     AuthProvider,
 } from "@/features/auth";
 
+import {
+    DialogProvider,
+} from "./DialogProvider";
+
+
 export function AppProviders({
                                  children,
                              }: PropsWithChildren) {
     return (
         <Provider store={store}>
-            <AuthProvider>
-                {children}
-            </AuthProvider>
+            <DialogProvider>
+                <AuthProvider>
+                    {children}
+                </AuthProvider>
+            </DialogProvider>
         </Provider>
     );
 }
