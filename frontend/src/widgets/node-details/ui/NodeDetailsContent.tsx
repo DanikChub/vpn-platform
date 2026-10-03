@@ -217,91 +217,20 @@ const NodeDetailsContent = ({
 
             <div className="grid gap-5 xl:grid-cols-2">
 
-                <Card>
-                    <CardContent>
-                        <CardTitle>
-                            Подключение
-                        </CardTitle>
-
-                        <div className="mt-5 space-y-4">
-                            <DetailsRow
-                                label="Host"
-                                value={
-                                    node.host
-                                }
-                                monospace
-                            />
-
-                            <DetailsRow
-                                label="Port"
-                                value={
-                                    node.port
-                                }
-                            />
-
-                            <DetailsRow
-                                label="SSH port"
-                                value={
-                                    node.ssh_port
-                                }
-                            />
-
-                            <DetailsRow
-                                label="SSH user"
-                                value={
-                                    node.ssh_user
-                                }
-                                monospace
-                            />
-
-                            <DetailsRow
-                                label="Inbound tag"
-                                value={
-                                    node.inbound_tag
-                                }
-                                monospace
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
+                <NodeConnectionSettings
+                    node={node}
+                    onUpdated={() => {
+                        void onReload();
+                    }}
+                />
 
 
-                <Card>
-                    <CardContent>
-                        <CardTitle>
-                            Reality
-                        </CardTitle>
-
-                        <div className="mt-5 space-y-4">
-                            <DetailsRow
-                                label="Server name"
-                                value={
-                                    node.reality_server_name ||
-                                    "Не настроено"
-                                }
-                                monospace
-                            />
-
-                            <DetailsRow
-                                label="Public key"
-                                value={
-                                    node.reality_public_key ||
-                                    "Не настроено"
-                                }
-                                monospace
-                            />
-
-                            <DetailsRow
-                                label="Short ID"
-                                value={
-                                    node.reality_short_id ||
-                                    "Не настроено"
-                                }
-                                monospace
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
+                <NodeRealitySettings
+                    node={node}
+                    onUpdated={() => {
+                        void onReload();
+                    }}
+                />
 
             </div>
 
@@ -961,6 +890,555 @@ function formatUptime(
     }
 
     return `${minutes} мин.`;
+}
+
+interface NodeConnectionSettingsProps {
+    node: VpnNode;
+    onUpdated: () => void;
+}
+
+function NodeConnectionSettings({
+                                    node,
+                                    onUpdated,
+                                }: NodeConnectionSettingsProps) {
+    const [isOpen, setIsOpen] =
+        useState(false);
+
+    const [host, setHost] =
+        useState(node.host);
+
+    const [port, setPort] =
+        useState(String(node.port));
+
+    const [sshPort, setSshPort] =
+        useState(String(node.ssh_port));
+
+    const [sshUser, setSshUser] =
+        useState(node.ssh_user);
+
+    const [inboundTag, setInboundTag] =
+        useState(node.inbound_tag);
+
+    const [isSaving, setIsSaving] =
+        useState(false);
+
+    const handleOpen = () => {
+        setHost(node.host);
+        setPort(String(node.port));
+        setSshPort(String(node.ssh_port));
+        setSshUser(node.ssh_user);
+        setInboundTag(node.inbound_tag);
+
+        setIsOpen(true);
+    };
+
+    const handleSave = async () => {
+        setIsSaving(true);
+
+        try {
+            await vpnNodeApi.updateField(
+                node.id,
+                "host",
+                host,
+            );
+
+            await vpnNodeApi.updateField(
+                node.id,
+                "port",
+                Number(port),
+            );
+
+            await vpnNodeApi.updateField(
+                node.id,
+                "ssh_port",
+                Number(sshPort),
+            );
+
+            await vpnNodeApi.updateField(
+                node.id,
+                "ssh_user",
+                sshUser,
+            );
+
+            await vpnNodeApi.updateField(
+                node.id,
+                "inbound_tag",
+                inboundTag,
+            );
+
+            setIsOpen(false);
+            onUpdated();
+
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <>
+            <button
+                type="button"
+                className="w-full text-left"
+                onClick={handleOpen}
+            >
+                <Card>
+                    <CardContent>
+                        <CardTitle>
+                            Подключение
+                        </CardTitle>
+
+                        <div className="mt-5 space-y-4">
+                            <DetailsRow
+                                label="Host"
+                                value={node.host}
+                                monospace
+                            />
+
+                            <DetailsRow
+                                label="Port"
+                                value={node.port}
+                            />
+
+                            <DetailsRow
+                                label="SSH port"
+                                value={node.ssh_port}
+                            />
+
+                            <DetailsRow
+                                label="SSH user"
+                                value={node.ssh_user}
+                                monospace
+                            />
+
+                            <DetailsRow
+                                label="Inbound tag"
+                                value={node.inbound_tag}
+                                monospace
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+            </button>
+
+            <Modal
+                isOpen={isOpen}
+                onClose={() => {
+                    setIsOpen(false);
+                }}
+                title="Настройки подключения"
+            >
+                <div className="space-y-4">
+                    <Input
+                        label="Host"
+                        value={host}
+                        onChange={(event) => {
+                            setHost(event.target.value);
+                        }}
+                    />
+
+                    <Input
+                        label="Port"
+                        value={port}
+                        onChange={(event) => {
+                            setPort(event.target.value);
+                        }}
+                    />
+
+                    <Input
+                        label="SSH port"
+                        value={sshPort}
+                        onChange={(event) => {
+                            setSshPort(event.target.value);
+                        }}
+                    />
+
+                    <Input
+                        label="SSH user"
+                        value={sshUser}
+                        onChange={(event) => {
+                            setSshUser(event.target.value);
+                        }}
+                    />
+
+                    <Input
+                        label="Inbound tag"
+                        value={inboundTag}
+                        onChange={(event) => {
+                            setInboundTag(
+                                event.target.value,
+                            );
+                        }}
+                    />
+
+                    <div className="flex justify-end gap-3">
+                        <Button
+                            variant="ghost"
+                            onClick={() => {
+                                setIsOpen(false);
+                            }}
+                        >
+                            Отмена
+                        </Button>
+
+                        <Button
+                            disabled={isSaving}
+                            onClick={handleSave}
+                        >
+                            {isSaving
+                                ? "Сохранение..."
+                                : "Сохранить"}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+        </>
+    );
+}
+
+interface NodeRealitySettingsProps {
+    node: VpnNode;
+    onUpdated: () => void;
+}
+
+function NodeRealitySettings({
+                                 node,
+                                 onUpdated,
+                             }: NodeRealitySettingsProps) {
+    const [isOpen, setIsOpen] =
+        useState(false);
+
+    const [serverName, setServerName] =
+        useState(node.reality_server_name ?? "");
+
+    const [publicKey, setPublicKey] =
+        useState(node.reality_public_key ?? "");
+
+    const [shortId, setShortId] =
+        useState(node.reality_short_id ?? "");
+
+    const [isSaving, setIsSaving] =
+        useState(false);
+
+    const handleOpen = () => {
+        setServerName(
+            node.reality_server_name ?? "",
+        );
+
+        setPublicKey(
+            node.reality_public_key ?? "",
+        );
+
+        setShortId(
+            node.reality_short_id ?? "",
+        );
+
+        setIsOpen(true);
+    };
+
+    const handleSave = async () => {
+        setIsSaving(true);
+
+        try {
+            await vpnNodeApi.updateField(
+                node.id,
+                "reality_server_name",
+                serverName,
+            );
+
+            await vpnNodeApi.updateField(
+                node.id,
+                "reality_public_key",
+                publicKey,
+            );
+
+            await vpnNodeApi.updateField(
+                node.id,
+                "reality_short_id",
+                shortId,
+            );
+
+            setIsOpen(false);
+            onUpdated();
+
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <>
+            <button
+                type="button"
+                className="w-full text-left"
+                onClick={handleOpen}
+            >
+                <Card>
+                    <CardContent>
+                        <CardTitle>
+                            Reality
+                        </CardTitle>
+
+                        <div className="mt-5 space-y-4">
+                            <DetailsRow
+                                label="Server name"
+                                value={
+                                    node.reality_server_name ||
+                                    "Не настроено"
+                                }
+                                monospace
+                            />
+
+                            <DetailsRow
+                                label="Public key"
+                                value={
+                                    node.reality_public_key ||
+                                    "Не настроено"
+                                }
+                                monospace
+                            />
+
+                            <DetailsRow
+                                label="Short ID"
+                                value={
+                                    node.reality_short_id ||
+                                    "Не настроено"
+                                }
+                                monospace
+                            />
+
+                            <div className="mb-3 text-sm text-slate-500">
+                                Агент: {node.install_status}
+                            </div>
+
+                            <div className="mt-5 border-t border-slate-200 pt-5">
+                                <InstallAgentButton
+                                    node={node}
+                                    onInstalled={onUpdated}
+                                />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </button>
+
+            <Modal
+                isOpen={isOpen}
+                onClose={() => {
+                    setIsOpen(false);
+                }}
+                title="Настройки Reality"
+            >
+                <div className="space-y-4">
+                    <Input
+                        label="Server name"
+                        value={serverName}
+                        onChange={(event) => {
+                            setServerName(
+                                event.target.value,
+                            );
+                        }}
+                    />
+
+                    <Input
+                        label="Public key"
+                        value={publicKey}
+                        onChange={(event) => {
+                            setPublicKey(
+                                event.target.value,
+                            );
+                        }}
+                    />
+
+                    <Input
+                        label="Short ID"
+                        value={shortId}
+                        onChange={(event) => {
+                            setShortId(
+                                event.target.value,
+                            );
+                        }}
+                    />
+
+                    <div className="flex justify-end gap-3">
+                        <Button
+                            variant="ghost"
+                            onClick={() => {
+                                setIsOpen(false);
+                            }}
+                        >
+                            Отмена
+                        </Button>
+
+                        <Button
+                            disabled={isSaving}
+                            onClick={handleSave}
+                        >
+                            {isSaving
+                                ? "Сохранение..."
+                                : "Сохранить"}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+        </>
+    );
+}
+
+interface InstallAgentButtonProps {
+    node: VpnNode;
+    onInstalled: () => void;
+}
+
+function InstallAgentButton({
+                                node,
+                                onInstalled,
+                            }: InstallAgentButtonProps) {
+    const [isOpen, setIsOpen] =
+        useState(false);
+
+    const [sshPassword, setSshPassword] =
+        useState("");
+
+    const [isInstalling, setIsInstalling] =
+        useState(false);
+
+    const [error, setError] =
+        useState<string | null>(null);
+
+    const handleOpen = () => {
+        setSshPassword("");
+        setError(null);
+        setIsOpen(true);
+    };
+
+    const handleInstall = async () => {
+        if (!sshPassword) {
+            setError(
+                "Введите SSH пароль",
+            );
+
+            return;
+        }
+
+        setIsInstalling(true);
+        setError(null);
+
+        try {
+            await vpnNodeApi.installAgent(
+                node.id,
+                sshPassword,
+            );
+
+            setSshPassword("");
+            setIsOpen(false);
+
+            onInstalled();
+
+        } catch (error) {
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : "Не удалось установить агент",
+            );
+
+        } finally {
+            setIsInstalling(false);
+        }
+    };
+
+    return (
+        <>
+            <Button
+                onClick={handleOpen}
+            >
+                Установить агент
+            </Button>
+
+            <Modal
+                isOpen={isOpen}
+                onClose={() => {
+                    if (!isInstalling) {
+                        setIsOpen(false);
+                    }
+                }}
+                title="Установка агента"
+            >
+                <div className="space-y-5">
+
+                    <div className="rounded-lg bg-slate-50 p-4 text-sm">
+                        <div>
+                            <b>Host:</b>{" "}
+                            {node.host}
+                        </div>
+
+                        <div>
+                            <b>SSH:</b>{" "}
+                            {node.ssh_user}
+                            @
+                            {node.host}
+                            :
+                            {node.ssh_port}
+                        </div>
+                    </div>
+
+                    <Input
+                        label="SSH пароль"
+                        type="password"
+                        value={sshPassword}
+                        disabled={isInstalling}
+                        onChange={(event) => {
+                            setSshPassword(
+                                event.target.value,
+                            );
+                        }}
+                        placeholder="Введите пароль root"
+                    />
+
+                    {error && (
+                        <div
+                            className="
+                                rounded-lg
+                                border
+                                border-red-200
+                                bg-red-50
+                                px-4
+                                py-3
+                                text-sm
+                                text-red-700
+                            "
+                        >
+                            {error}
+                        </div>
+                    )}
+
+                    <div className="flex justify-end gap-3">
+                        <Button
+                            variant="ghost"
+                            disabled={isInstalling}
+                            onClick={() => {
+                                setIsOpen(false);
+                            }}
+                        >
+                            Отмена
+                        </Button>
+
+                        <Button
+                            disabled={
+                                isInstalling ||
+                                !sshPassword
+                            }
+                            onClick={handleInstall}
+                        >
+                            {isInstalling
+                                ? "Установка..."
+                                : "Установить"}
+                        </Button>
+                    </div>
+
+                </div>
+            </Modal>
+        </>
+    );
 }
 
 

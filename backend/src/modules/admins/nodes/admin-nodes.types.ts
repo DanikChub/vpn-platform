@@ -69,17 +69,23 @@ export function mapNodeToAdminResponse(
 export interface CreateNodeDto {
     name: string;
     host: string;
-    port: number;
 
-    sshPort: number;
-    sshUser: string;
-    sshPassword: string;
+    sshPort?: number;
+    sshUser?: string;
 }
 
 
 export type EditableNodeField =
     | "name"
     | "display_name"
+    | "host"
+    | "port"
+    | "ssh_port"
+    | "ssh_user"
+    | "inbound_tag"
+    | "reality_public_key"
+    | "reality_server_name"
+    | "reality_short_id"
     | "country_code"
     | "sort_order"
     | "is_active";

@@ -1,5 +1,5 @@
 export type {
     VpnNode,
     CreateVpnNodeDto,
-    EditableVpnNodeField
+    EditableNodeField
 } from "./vpn-node.types";

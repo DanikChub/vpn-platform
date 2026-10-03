@@ -1,4 +1,4 @@
-import type {EditableVpnNodeField, VpnNode} from "@/entities/vpn-node/model";
+import type {EditableNodeField, VpnNode} from "@/entities/vpn-node/model";
 import {apiClient} from "@/shared/api";
 import type {CreateVpnNodeDto} from "@/entities/vpn-node/model";
 
@@ -42,7 +42,7 @@ export const vpnNodeApi = {
 
     async updateField(
         nodeId: number,
-        field: EditableVpnNodeField,
+        field: EditableNodeField,
         value: unknown,
     ): Promise<VpnNode> {
 
@@ -56,6 +56,18 @@ export const vpnNodeApi = {
             );
 
         return response.data;
+    },
+
+    async installAgent(
+        nodeId: number,
+        sshPassword: string,
+    ): Promise<void> {
+        await apiClient.post(
+            `/admin/nodes/${nodeId}/install-agent`,
+            {
+                sshPassword,
+            },
+        );
     },
 
     async delete(

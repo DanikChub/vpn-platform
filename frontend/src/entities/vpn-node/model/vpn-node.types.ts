@@ -62,9 +62,17 @@ export interface CreateVpnNodeDto {
 
 }
 
-export type EditableVpnNodeField =
+export type EditableNodeField =
     | "name"
     | "display_name"
+    | "host"
+    | "port"
+    | "ssh_port"
+    | "ssh_user"
+    | "inbound_tag"
+    | "reality_public_key"
+    | "reality_server_name"
+    | "reality_short_id"
     | "country_code"
     | "sort_order"
     | "is_active";

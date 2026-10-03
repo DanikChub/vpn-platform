@@ -70,118 +70,63 @@ class AdminNodesService {
     public async create(
         dto: CreateNodeDto,
     ) {
-        let node =
+        const existingNode =
             await VpnNode.findOne({
                 where: {
-                    host:
-                    dto.host,
+                    host: dto.host,
                 },
             });
 
-        let agentToken =
-            node?.agent_token;
-
-        if (!node) {
-            agentToken =
-                randomBytes(32)
-                    .toString("hex");
-
-            node =
-                await VpnNode.create({
-                    name:
-                    dto.name,
-
-                    host:
-                    dto.host,
-
-                    port:
-                    dto.port,
-
-                    ssh_port:
-                    dto.sshPort,
-
-                    ssh_user:
-                    dto.sshUser,
-
-                    inbound_tag:
-                        "vless-reality-in",
-
-                    is_active:
-                        true,
-
-                    status:
-                        "offline",
-
-                    install_status:
-                        "pending",
-
-                    reality_public_key:
-                        "",
-
-                    reality_server_name:
-                        "",
-
-                    reality_short_id:
-                        "",
-
-                    agent_token:
-                    agentToken,
-                });
-        }
-
-        if (!agentToken) {
+        if (existingNode) {
             throw new Error(
-                "Node agent token is missing",
+                `Node with host ${dto.host} already exists`,
             );
         }
-        console.log(process.env.AGENT_CONTROL_SERVER_URL);
-        const provisioningResult =
-            await nodeProvisioningService.install({
-                nodeId:
-                node.id,
+
+        const node =
+            await VpnNode.create({
+                name:
+                dto.name,
 
                 host:
                 dto.host,
 
+                // Xray — потом заполняем вручную
                 port:
-                dto.port,
+                    443,
 
-                sshPort:
-                dto.sshPort,
+                inbound_tag:
+                    "vless-reality-in",
 
-                sshUser:
-                dto.sshUser,
+                reality_public_key:
+                    "",
 
-                sshPassword:
-                dto.sshPassword,
+                reality_server_name:
+                    "",
 
-                token:
-                agentToken,
+                reality_short_id:
+                    "",
 
-                controlServerUrl:
-                    process.env.AGENT_CONTROL_SERVER_URL!,
+                // Нужны для установки агента
+                ssh_port:
+                    dto.sshPort ?? 22,
+
+                ssh_user:
+                    dto.sshUser ?? "root",
+
+                agent_token:
+                    randomBytes(32)
+                        .toString("hex"),
+
+                is_active:
+                    false,
+
+                status:
+                    "offline",
+
+                install_status:
+                    "pending",
             });
-
-        await node.update({
-            reality_public_key:
-            provisioningResult
-                .realityPublicKey,
-
-            reality_short_id:
-            provisioningResult
-                .realityShortId,
-
-            reality_server_name:
-            provisioningResult
-                .serverName,
-
-            port:
-            provisioningResult.port,
-
-            inbound_tag:
-            provisioningResult
-                .inboundTag,
-        });
 
         return mapNodeToAdminResponse(
             node,
@@ -264,13 +209,49 @@ class AdminNodesService {
         switch (field) {
 
             case "name":
-            case "display_name": {
+            case "display_name":
+            case "ssh_user":
+            case "inbound_tag":
+            case "reality_public_key":
+            case "reality_server_name":
+            case "reality_short_id": {
                 if (
                     value !== null &&
                     typeof value !== "string"
                 ) {
                     throw new Error(
                         `Invalid value for ${field}`,
+                    );
+                }
+
+                return value;
+            }
+
+
+            case "host": {
+                if (
+                    typeof value !== "string" ||
+                    !value.trim()
+                ) {
+                    throw new Error(
+                        "Invalid host",
+                    );
+                }
+
+                return value.trim();
+            }
+
+
+            case "port":
+            case "ssh_port": {
+                if (
+                    typeof value !== "number" ||
+                    !Number.isInteger(value) ||
+                    value < 1 ||
+                    value > 65535
+                ) {
+                    throw new Error(
+                        `Invalid ${field}`,
                     );
                 }
 
@@ -285,9 +266,7 @@ class AdminNodesService {
 
                 if (
                     typeof value !== "string" ||
-                    !/^[A-Za-z]{2}$/.test(
-                        value,
-                    )
+                    !/^[A-Za-z]{2}$/.test(value)
                 ) {
                     throw new Error(
                         "Invalid country_code",
