@@ -10,9 +10,7 @@ import type {
 } from "axios";
 
 import {
-    sessionUnauthenticated,
-} from "@/features/auth";
-import {
+    sessionUnauthorized,
     tokenStorage,
 } from "@/shared/lib";
 
@@ -74,7 +72,7 @@ BaseQueryFn<
                 tokenStorage.removeToken();
 
                 api.dispatch(
-                    sessionUnauthenticated()
+                    sessionUnauthorized()
                 );
 
                 api.dispatch(

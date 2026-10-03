@@ -23,3 +23,7 @@ export type {
     ConfirmOptions,
     DialogContextValue,
 } from "./dialog";
+
+export {
+    sessionUnauthorized,
+} from "./session";

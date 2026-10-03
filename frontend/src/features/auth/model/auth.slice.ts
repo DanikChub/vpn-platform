@@ -6,6 +6,9 @@ import {
 import type {
     Admin,
 } from "@/entities/admin";
+import {
+    sessionUnauthorized,
+} from "@/shared/lib";
 
 import type {
     AuthStatus,
@@ -42,6 +45,16 @@ const authSlice = createSlice({
             state.admin = null;
             state.status = "unauthenticated";
         },
+    },
+    extraReducers: (builder) => {
+        builder.addCase(
+            sessionUnauthorized,
+            (state) => {
+                state.admin = null;
+                state.status =
+                    "unauthenticated";
+            }
+        );
     },
 });
 
