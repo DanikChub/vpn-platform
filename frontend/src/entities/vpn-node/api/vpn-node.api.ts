@@ -1,120 +1,68 @@
-import type {EditableNodeField, VpnNode} from "@/entities/vpn-node/model";
-import {apiClient} from "@/shared/api";
-import type {CreateVpnNodeDto} from "@/entities/vpn-node/model";
+import type { CreateVpnNodeDto, EditableNodeField, VpnNode } from "../model";
 import { baseApi } from "@/shared/api";
 
+interface UpdateVpnNodeFieldArgs {
+    nodeId: number;
+    field: EditableNodeField;
+    value: unknown;
+}
 
-export const vpnNodeApi = {
-    async getAll(): Promise<VpnNode[]> {
+interface InstallVpnNodeAgentArgs {
+    nodeId: number;
+    sshPassword: string;
+}
 
-        const response =
-            await apiClient.get<VpnNode[]>(
-                "/admin/nodes",
-            );
-
-
-        return response.data;
-    },
-
-    async getDetails(
-        nodeId: number,
-    ): Promise<VpnNode> {
-        const response =
-            await apiClient.get<VpnNode>(
-                `/admin/nodes/${nodeId}/details`,
-            );
-
-        return response.data;
-    },
-
-    async create(
-        data: CreateVpnNodeDto,
-    ): Promise<VpnNode> {
-
-        const response =
-            await apiClient.post<VpnNode>(
-                "/admin/nodes",
-                data,
-            );
-
-        return response.data;
-    },
-
-    async updateField(
-        nodeId: number,
-        field: EditableNodeField,
-        value: unknown,
-    ): Promise<VpnNode> {
-
-        const response =
-            await apiClient.patch<VpnNode>(
-                `/admin/nodes/${nodeId}`,
-                {
-                    field,
-                    value,
-                },
-            );
-
-        return response.data;
-    },
-
-    async installAgent(
-        nodeId: number,
-        sshPassword: string,
-    ): Promise<void> {
-        await apiClient.post(
-            `/admin/nodes/${nodeId}/install-agent`,
-            {
-                sshPassword,
-            },
-        );
-    },
-
-    async delete(
-        nodeId: number,
-    ): Promise<void> {
-        await apiClient.delete(
-            `/admin/nodes/${nodeId}`,
-        );
-    },
-};
-
-export const vpnNodeRtkApi = baseApi.injectEndpoints({
+export const vpnNodeApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         getVpnNodes: builder.query<VpnNode[], void>({
-            query: () => ({
-                url: "/admin/nodes",
-            }),
-
-            providesTags: ["VpnNode"],
+            query: () => ({ url: "/admin/nodes" }),
+            providesTags: (result) => [
+                { type: "VpnNode", id: "LIST" },
+                ...(result?.map(({ id }) => ({ type: "VpnNode" as const, id })) ?? []),
+            ],
         }),
-
-        deleteVpnNode: builder.mutation<void, number>({
-            query: (nodeId) => ({
+        getVpnNode: builder.query<VpnNode, number>({
+            query: (nodeId) => ({ url: `/admin/nodes/${nodeId}/details` }),
+            providesTags: (_result, _error, nodeId) => [{ type: "VpnNode", id: nodeId }],
+        }),
+        createVpnNode: builder.mutation<VpnNode, CreateVpnNodeDto>({
+            query: (data) => ({ url: "/admin/nodes", method: "POST", data }),
+            invalidatesTags: [{ type: "VpnNode", id: "LIST" }],
+        }),
+        updateVpnNodeField: builder.mutation<VpnNode, UpdateVpnNodeFieldArgs>({
+            query: ({ nodeId, field, value }) => ({
                 url: `/admin/nodes/${nodeId}`,
-                method: "DELETE",
+                method: "PATCH",
+                data: { field, value },
             }),
-
-            invalidatesTags: ["VpnNode"],
+            invalidatesTags: (_result, _error, { nodeId }) => [
+                { type: "VpnNode", id: nodeId },
+                { type: "VpnNode", id: "LIST" },
+            ],
         }),
-        createVpnNode: builder.mutation<
-            VpnNode,
-            CreateVpnNodeDto
-        >({
-            query: (data) => ({
-                url: "/admin/nodes",
+        installVpnNodeAgent: builder.mutation<void, InstallVpnNodeAgentArgs>({
+            query: ({ nodeId, sshPassword }) => ({
+                url: `/admin/nodes/${nodeId}/install-agent`,
                 method: "POST",
-                data,
+                data: { sshPassword },
             }),
-
-            invalidatesTags: ["VpnNode"],
+            invalidatesTags: (_result, _error, { nodeId }) => [{ type: "VpnNode", id: nodeId }],
+        }),
+        deleteVpnNode: builder.mutation<void, number>({
+            query: (nodeId) => ({ url: `/admin/nodes/${nodeId}`, method: "DELETE" }),
+            invalidatesTags: (_result, _error, nodeId) => [
+                { type: "VpnNode", id: nodeId },
+                { type: "VpnNode", id: "LIST" },
+            ],
         }),
     }),
 });
 
-
 export const {
     useGetVpnNodesQuery,
-    useDeleteVpnNodeMutation,
+    useGetVpnNodeQuery,
     useCreateVpnNodeMutation,
-} = vpnNodeRtkApi;
+    useUpdateVpnNodeFieldMutation,
+    useInstallVpnNodeAgentMutation,
+    useDeleteVpnNodeMutation,
+} = vpnNodeApi;

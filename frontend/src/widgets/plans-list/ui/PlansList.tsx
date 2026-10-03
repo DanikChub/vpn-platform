@@ -1,121 +1,59 @@
-import {
-    useState,
-} from "react";
-
-import {
-    type Plan,
-} from "@/entities/plan";
-
-import {
-    ManagePlan,
-} from "@/features/manage-plan";
-
-import usePlansList
-    from "../model";
-
-import PlansListContent
-    from "./PlansListContent";
-
+import { useState } from "react";
+import { CreditCard } from "lucide-react";
+import { type Plan, PlansTable, useGetPlansQuery } from "@/entities/plan";
+import { ManagePlan } from "@/features/manage-plan";
+import { AsyncContent } from "@/shared/ui";
 
 export function PlansList() {
-    const [
-        formPlan,
-        setFormPlan,
-    ] =
-        useState<Plan | null>(
-            null
-        );
+    const [formPlan, setFormPlan] = useState<Plan | null>(null);
+    const [deletingPlan, setDeletingPlan] = useState<Plan | null>(null);
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const { data, isLoading, error } = useGetPlansQuery();
+    const plans = data?.plans ?? [];
 
-    const [
-        deletingPlan,
-        setDeletingPlan,
-    ] =
-        useState<Plan | null>(
-            null
-        );
-
-    const [
-        isFormOpen,
-        setIsFormOpen,
-    ] =
-        useState(false);
-
-    const {
-        plans,
-        status,
-        actions,
-    } =
-        usePlansList();
-
-
-    const openCreate = (): void => {
+    const openCreate = () => {
         setFormPlan(null);
         setIsFormOpen(true);
     };
 
-
-    const openEdit = (
-        plan: Plan
-    ): void => {
+    const openEdit = (plan: Plan) => {
         setFormPlan(plan);
         setIsFormOpen(true);
     };
 
-
-    const closeForm = (): void => {
+    const closeForm = () => {
         setIsFormOpen(false);
         setFormPlan(null);
     };
-
 
     return (
         <div className="space-y-5">
             <div className="flex justify-end">
                 <ManagePlan
-                    deletingPlan={
-                        deletingPlan
-                    }
-                    formPlan={
-                        formPlan
-                    }
-                    isFormOpen={
-                        isFormOpen
-                    }
-                    onCloseDelete={() => {
-                        setDeletingPlan(
-                            null
-                        );
-                    }}
-                    onCloseForm={
-                        closeForm
-                    }
-                    onOpenCreate={
-                        openCreate
-                    }
-                    onSuccess={
-                        actions.reload
-                    }
+                    deletingPlan={deletingPlan}
+                    formPlan={formPlan}
+                    isFormOpen={isFormOpen}
+                    onCloseDelete={() => setDeletingPlan(null)}
+                    onCloseForm={closeForm}
+                    onOpenCreate={openCreate}
                 />
             </div>
 
-            <PlansListContent
-                errorMessage={
-                    status.errorMessage
-                }
-                isLoading={
-                    status.isLoading
-                }
-                isMutating={false}
-                onDelete={
-                    setDeletingPlan
-                }
-                onEdit={
-                    openEdit
-                }
-                plans={
-                    plans
-                }
-            />
+            <AsyncContent
+                isLoading={isLoading}
+                errorMessage={error ? "Не удалось загрузить тарифы" : null}
+                isEmpty={plans.length === 0}
+                emptyTitle="Тарифов пока нет"
+                emptyDescription="Создайте первый тариф, чтобы пользователи могли покупать подписку."
+                emptyIcon={<CreditCard className="size-6" />}
+            >
+                <PlansTable
+                    isMutating={false}
+                    onDelete={setDeletingPlan}
+                    onEdit={openEdit}
+                    plans={plans}
+                />
+            </AsyncContent>
         </div>
     );
 }

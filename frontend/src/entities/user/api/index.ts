@@ -1,3 +1,9 @@
 export {
     userApi,
-} from "./user.api.ts";
+    useGetUsersQuery,
+    useGetUserQuery,
+    useExtendUserSubscriptionMutation,
+    useExpireUserSubscriptionMutation,
+    useBlockUserSubscriptionMutation,
+    useUnblockUserSubscriptionMutation,
+} from "./user.api";

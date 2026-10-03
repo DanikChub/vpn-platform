@@ -61,3 +61,4 @@ export {
 } from "./Table";
 
 export * from "./DetailsRow";
+export { AsyncContent } from "./AsyncContent";

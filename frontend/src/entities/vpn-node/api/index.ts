@@ -1,6 +1,9 @@
 export {
     vpnNodeApi,
     useGetVpnNodesQuery,
+    useGetVpnNodeQuery,
+    useCreateVpnNodeMutation,
+    useUpdateVpnNodeFieldMutation,
+    useInstallVpnNodeAgentMutation,
     useDeleteVpnNodeMutation,
-    useCreateVpnNodeMutation
 } from "./vpn-node.api";

@@ -24,23 +24,12 @@ import {
 
 
 interface ManagePlanProps {
-    formPlan:
-        | Plan
-        | null;
-
-    deletingPlan:
-        | Plan
-        | null;
-
+    formPlan: Plan | null;
+    deletingPlan: Plan | null;
     isFormOpen: boolean;
-
     onOpenCreate: () => void;
     onCloseForm: () => void;
     onCloseDelete: () => void;
-
-    onSuccess: () =>
-        | void
-        | Promise<void>;
 }
 
 
@@ -51,15 +40,12 @@ export function ManagePlan({
                                onOpenCreate,
                                onCloseForm,
                                onCloseDelete,
-                               onSuccess,
                            }: ManagePlanProps) {
     const {
         status,
         actions,
     } =
-        useManagePlan({
-            onSuccess,
-        });
+        useManagePlan();
 
 
     const submitPlan = (

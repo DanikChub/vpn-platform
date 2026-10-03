@@ -1,95 +1,64 @@
-import {
-    apiClient,
-} from "@/shared/api";
-
+import { baseApi } from "@/shared/api";
 import type {
+    ExtendUserSubscriptionPayload,
     GetUsersParams,
     GetUsersResponse,
-    GetUserByIdResponse, ExtendUserSubscriptionPayload, UserSubscriptionMutationResponse
+    GetUserByIdResponse,
+    UserSubscriptionMutationResponse,
 } from "../model";
 
-export const userApi = {
-    async getAll(
-        params: GetUsersParams
-    ): Promise<GetUsersResponse> {
-        const response =
-            await apiClient.get<GetUsersResponse>(
-                "/admin/users",
-                {
-                    params,
-                }
-            );
+interface SubscriptionMutationArgs {
+    userId: number;
+}
 
-        return response.data;
-    },
+interface ExtendSubscriptionArgs extends SubscriptionMutationArgs {
+    payload: ExtendUserSubscriptionPayload;
+}
 
-    async getById(
-        userId: number
-    ): Promise<GetUserByIdResponse> {
-        const response =
-            await apiClient.get<GetUserByIdResponse>(
-                `/admin/users/${userId}`
-            );
+export const userApi = baseApi.injectEndpoints({
+    endpoints: (builder) => ({
+        getUsers: builder.query<GetUsersResponse, GetUsersParams>({
+            query: (params) => ({ url: "/admin/users", params }),
+            providesTags: (result) => [
+                { type: "User", id: "LIST" },
+                ...(result?.users.map(({ id }) => ({ type: "User" as const, id })) ?? []),
+            ],
+        }),
+        getUser: builder.query<GetUserByIdResponse, number>({
+            query: (userId) => ({ url: `/admin/users/${userId}` }),
+            providesTags: (_result, _error, userId) => [{ type: "User", id: userId }],
+        }),
+        extendUserSubscription: builder.mutation<UserSubscriptionMutationResponse, ExtendSubscriptionArgs>({
+            query: ({ userId, payload }) => ({
+                url: `/admin/users/${userId}/subscription/extend`,
+                method: "POST",
+                data: payload,
+            }),
+            invalidatesTags: (_result, _error, { userId }) => [
+                { type: "User", id: userId },
+                { type: "User", id: "LIST" },
+            ],
+        }),
+        expireUserSubscription: builder.mutation<UserSubscriptionMutationResponse, SubscriptionMutationArgs>({
+            query: ({ userId }) => ({ url: `/admin/users/${userId}/subscription/expire`, method: "POST" }),
+            invalidatesTags: (_result, _error, { userId }) => [{ type: "User", id: userId }, { type: "User", id: "LIST" }],
+        }),
+        blockUserSubscription: builder.mutation<UserSubscriptionMutationResponse, SubscriptionMutationArgs>({
+            query: ({ userId }) => ({ url: `/admin/users/${userId}/subscription/block`, method: "POST" }),
+            invalidatesTags: (_result, _error, { userId }) => [{ type: "User", id: userId }, { type: "User", id: "LIST" }],
+        }),
+        unblockUserSubscription: builder.mutation<UserSubscriptionMutationResponse, SubscriptionMutationArgs>({
+            query: ({ userId }) => ({ url: `/admin/users/${userId}/subscription/unblock`, method: "POST" }),
+            invalidatesTags: (_result, _error, { userId }) => [{ type: "User", id: userId }, { type: "User", id: "LIST" }],
+        }),
+    }),
+});
 
-        return response.data;
-    },
-
-
-    async extendSubscription(
-        userId: number,
-        payload:
-            ExtendUserSubscriptionPayload
-    ): Promise<UserSubscriptionMutationResponse> {
-        const response =
-            await apiClient.post<
-                UserSubscriptionMutationResponse
-            >(
-                `/admin/users/${userId}/subscription/extend`,
-                payload
-            );
-
-        return response.data;
-    },
-
-
-    async expireSubscription(
-        userId: number
-    ): Promise<UserSubscriptionMutationResponse> {
-        const response =
-            await apiClient.post<
-                UserSubscriptionMutationResponse
-            >(
-                `/admin/users/${userId}/subscription/expire`
-            );
-
-        return response.data;
-    },
-
-
-    async blockSubscription(
-        userId: number
-    ): Promise<UserSubscriptionMutationResponse> {
-        const response =
-            await apiClient.post<
-                UserSubscriptionMutationResponse
-            >(
-                `/admin/users/${userId}/subscription/block`
-            );
-
-        return response.data;
-    },
-
-
-    async unblockSubscription(
-        userId: number
-    ): Promise<UserSubscriptionMutationResponse> {
-        const response =
-            await apiClient.post<
-                UserSubscriptionMutationResponse
-            >(
-                `/admin/users/${userId}/subscription/unblock`
-            );
-
-        return response.data;
-    },
-};
+export const {
+    useGetUsersQuery,
+    useGetUserQuery,
+    useExtendUserSubscriptionMutation,
+    useExpireUserSubscriptionMutation,
+    useBlockUserSubscriptionMutation,
+    useUnblockUserSubscriptionMutation,
+} = userApi;

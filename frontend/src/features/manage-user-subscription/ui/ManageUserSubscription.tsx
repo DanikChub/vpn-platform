@@ -47,16 +47,11 @@ type OpenModal =
 
 interface ManageUserSubscriptionProps {
     user: UserDetails;
-
-    onSuccess: () =>
-        | void
-        | Promise<void>;
 }
 
 
 export function ManageUserSubscription({
                                            user,
-                                           onSuccess,
                                        }: ManageUserSubscriptionProps) {
     const [
         openModal,
@@ -71,10 +66,7 @@ export function ManageUserSubscription({
         actions,
     } =
         useManageUserSubscription({
-            userId:
-            user.id,
-
-            onSuccess,
+            userId: user.id,
         });
 
     const subscription =

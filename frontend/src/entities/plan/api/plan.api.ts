@@ -1,7 +1,4 @@
-import {
-    apiClient,
-} from "@/shared/api";
-
+import { baseApi } from "@/shared/api";
 import type {
     CreatePlanPayload,
     CreatePlanResponse,
@@ -11,72 +8,43 @@ import type {
     UpdatePlanResponse,
 } from "../model";
 
+interface UpdatePlanArgs {
+    planId: number;
+    payload: UpdatePlanPayload;
+}
 
-export const planApi = {
-    async getAll(): Promise<
-        GetPlansResponse
-    > {
-        const response =
-            await apiClient.get<
-                GetPlansResponse
-            >(
-                "/admin/plans"
-            );
+export const planApi = baseApi.injectEndpoints({
+    endpoints: (builder) => ({
+        getPlans: builder.query<GetPlansResponse, void>({
+            query: () => ({ url: "/admin/plans" }),
+            providesTags: (result) => [
+                { type: "Plan", id: "LIST" },
+                ...(result?.plans.map(({ id }) => ({ type: "Plan" as const, id })) ?? []),
+            ],
+        }),
+        getPlan: builder.query<GetPlanByIdResponse, number>({
+            query: (planId) => ({ url: `/admin/plans/${planId}` }),
+            providesTags: (_result, _error, planId) => [{ type: "Plan", id: planId }],
+        }),
+        createPlan: builder.mutation<CreatePlanResponse, CreatePlanPayload>({
+            query: (data) => ({ url: "/admin/plans", method: "POST", data }),
+            invalidatesTags: [{ type: "Plan", id: "LIST" }],
+        }),
+        updatePlan: builder.mutation<UpdatePlanResponse, UpdatePlanArgs>({
+            query: ({ planId, payload }) => ({ url: `/admin/plans/${planId}`, method: "PATCH", data: payload }),
+            invalidatesTags: (_result, _error, { planId }) => [{ type: "Plan", id: planId }, { type: "Plan", id: "LIST" }],
+        }),
+        deletePlan: builder.mutation<void, number>({
+            query: (planId) => ({ url: `/admin/plans/${planId}`, method: "DELETE" }),
+            invalidatesTags: (_result, _error, planId) => [{ type: "Plan", id: planId }, { type: "Plan", id: "LIST" }],
+        }),
+    }),
+});
 
-        return response.data;
-    },
-
-
-    async getById(
-        planId: number
-    ): Promise<GetPlanByIdResponse> {
-        const response =
-            await apiClient.get<
-                GetPlanByIdResponse
-            >(
-                `/admin/plans/${planId}`
-            );
-
-        return response.data;
-    },
-
-
-    async create(
-        payload: CreatePlanPayload
-    ): Promise<CreatePlanResponse> {
-        const response =
-            await apiClient.post<
-                CreatePlanResponse
-            >(
-                "/admin/plans",
-                payload
-            );
-
-        return response.data;
-    },
-
-
-    async update(
-        planId: number,
-        payload: UpdatePlanPayload
-    ): Promise<UpdatePlanResponse> {
-        const response =
-            await apiClient.patch<
-                UpdatePlanResponse
-            >(
-                `/admin/plans/${planId}`,
-                payload
-            );
-
-        return response.data;
-    },
-
-
-    async deleteById(
-        planId: number
-    ): Promise<void> {
-        await apiClient.delete(
-            `/admin/plans/${planId}`
-        );
-    },
-};
+export const {
+    useGetPlansQuery,
+    useGetPlanQuery,
+    useCreatePlanMutation,
+    useUpdatePlanMutation,
+    useDeletePlanMutation,
+} = planApi;

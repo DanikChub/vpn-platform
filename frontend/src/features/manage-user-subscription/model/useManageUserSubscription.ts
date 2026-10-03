@@ -1,152 +1,59 @@
 import {
-    useState,
-} from "react";
-
-import {
-    userApi,
+    useBlockUserSubscriptionMutation,
+    useExpireUserSubscriptionMutation,
+    useExtendUserSubscriptionMutation,
+    useUnblockUserSubscriptionMutation,
 } from "@/entities/user";
 
-import {
-    getApiErrorMessage,
-} from "@/shared/api";
+const useManageUserSubscription = ({ userId }: { userId: number }) => {
+    const [extendMutation, extendState] = useExtendUserSubscriptionMutation();
+    const [expireMutation, expireState] = useExpireUserSubscriptionMutation();
+    const [blockMutation, blockState] = useBlockUserSubscriptionMutation();
+    const [unblockMutation, unblockState] = useUnblockUserSubscriptionMutation();
 
-
-export type SubscriptionAction =
-    | "extend"
-    | "expire"
-    | "block"
-    | "unblock";
-
-
-interface UseManageUserSubscriptionOptions {
-    userId: number;
-
-    onSuccess: () =>
-        | void
-        | Promise<void>;
-}
-
-
-const useManageUserSubscription = ({
-                                       userId,
-                                       onSuccess,
-                                   }: UseManageUserSubscriptionOptions) => {
-    const [
-        activeAction,
-        setActiveAction,
-    ] =
-        useState<SubscriptionAction | null>(
-            null
-        );
-
-    const [
-        errorMessage,
-        setErrorMessage,
-    ] =
-        useState<string | null>(
-            null
-        );
-
-
-    const executeAction = async (
-        action: SubscriptionAction,
-        callback: () => Promise<unknown>
-    ): Promise<boolean> => {
-        setActiveAction(action);
-        setErrorMessage(null);
-
+    const execute = async (action: () => Promise<unknown>): Promise<boolean> => {
         try {
-            await callback();
-            await onSuccess();
-
+            await action();
             return true;
-        } catch (error: unknown) {
-            setErrorMessage(
-                getApiErrorMessage(
-                    error
-                )
-            );
-
+        } catch {
             return false;
-        } finally {
-            setActiveAction(null);
         }
     };
 
+    const activeAction =
+        extendState.isLoading ? "extend" :
+        expireState.isLoading ? "expire" :
+        blockState.isLoading ? "block" :
+        unblockState.isLoading ? "unblock" :
+        null;
 
-    const extendSubscription = (
-        durationDays: number
-    ): Promise<boolean> => {
-        return executeAction(
-            "extend",
-            () =>
-                userApi.extendSubscription(
-                    userId,
-                    {
-                        durationDays,
-                    }
-                )
-        );
-    };
-
-
-    const expireSubscription =
-        (): Promise<boolean> => {
-            return executeAction(
-                "expire",
-                () =>
-                    userApi.expireSubscription(
-                        userId
-                    )
-            );
-        };
-
-
-    const blockSubscription =
-        (): Promise<boolean> => {
-            return executeAction(
-                "block",
-                () =>
-                    userApi.blockSubscription(
-                        userId
-                    )
-            );
-        };
-
-
-    const unblockSubscription =
-        (): Promise<boolean> => {
-            return executeAction(
-                "unblock",
-                () =>
-                    userApi.unblockSubscription(
-                        userId
-                    )
-            );
-        };
-
+    const hasError =
+        extendState.isError || expireState.isError ||
+        blockState.isError || unblockState.isError;
 
     return {
         status: {
             activeAction,
-            errorMessage,
-
-            isLoading:
-                activeAction !== null,
+            errorMessage: hasError ? "Не удалось изменить подписку" : null,
+            isLoading: activeAction !== null,
         },
-
         actions: {
-            extendSubscription,
-            expireSubscription,
-            blockSubscription,
-            unblockSubscription,
-
+            extendSubscription: (durationDays: number) =>
+                execute(() => extendMutation({ userId, payload: { durationDays } }).unwrap()),
+            expireSubscription: () =>
+                execute(() => expireMutation({ userId }).unwrap()),
+            blockSubscription: () =>
+                execute(() => blockMutation({ userId }).unwrap()),
+            unblockSubscription: () =>
+                execute(() => unblockMutation({ userId }).unwrap()),
             clearError: () => {
-                setErrorMessage(null);
+                extendState.reset();
+                expireState.reset();
+                blockState.reset();
+                unblockState.reset();
             },
         },
     };
 };
-
 
 export default useManageUserSubscription;

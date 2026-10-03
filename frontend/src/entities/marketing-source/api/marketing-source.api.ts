@@ -1,142 +1,64 @@
-import {
-    apiClient,
-} from "@/shared/api";
-
-
+import { baseApi } from "@/shared/api";
 import type {
-    MarketingSource,
-
     CreateMarketingSourceDto,
-    UpdateMarketingSourceDto,
-
+    MarketingSource,
     MarketingSourceUsersResponse,
-
+    UpdateMarketingSourceDto,
 } from "../model";
 
+export interface GetMarketingSourcesParams {
+    is_active?: boolean;
+    type?: string;
+    search?: string;
+}
 
-export const marketingSourceApi = {
+interface UpdateMarketingSourceArgs {
+    id: number;
+    data: UpdateMarketingSourceDto;
+}
 
+export const marketingSourceApi = baseApi.injectEndpoints({
+    endpoints: (builder) => ({
+        getMarketingSources: builder.query<MarketingSource[], GetMarketingSourcesParams | void>({
+            query: (params) => ({ url: "/admin/marketing-sources", params: params || undefined }),
+            providesTags: (result) => [
+                { type: "MarketingSource", id: "LIST" },
+                ...(result?.map(({ id }) => ({ type: "MarketingSource" as const, id })) ?? []),
+            ],
+        }),
+        getMarketingSource: builder.query<MarketingSource, number>({
+            query: (id) => ({ url: `/admin/marketing-sources/${id}` }),
+            providesTags: (_result, _error, id) => [{ type: "MarketingSource", id }],
+        }),
+        getMarketingSourceUsers: builder.query<MarketingSourceUsersResponse, number>({
+            query: (id) => ({ url: `/admin/marketing-sources/${id}/users` }),
+            providesTags: (_result, _error, id) => [{ type: "MarketingSource", id }],
+        }),
+        createMarketingSource: builder.mutation<MarketingSource, CreateMarketingSourceDto>({
+            query: (data) => ({ url: "/admin/marketing-sources", method: "POST", data }),
+            invalidatesTags: [{ type: "MarketingSource", id: "LIST" }],
+        }),
+        updateMarketingSource: builder.mutation<MarketingSource, UpdateMarketingSourceArgs>({
+            query: ({ id, data }) => ({ url: `/admin/marketing-sources/${id}`, method: "PATCH", data }),
+            invalidatesTags: (_result, _error, { id }) => [{ type: "MarketingSource", id }, { type: "MarketingSource", id: "LIST" }],
+        }),
+        deleteMarketingSource: builder.mutation<MarketingSource, number>({
+            query: (id) => ({ url: `/admin/marketing-sources/${id}`, method: "DELETE" }),
+            invalidatesTags: (_result, _error, id) => [{ type: "MarketingSource", id }, { type: "MarketingSource", id: "LIST" }],
+        }),
+        restoreMarketingSource: builder.mutation<MarketingSource, number>({
+            query: (id) => ({ url: `/admin/marketing-sources/${id}/restore`, method: "POST" }),
+            invalidatesTags: (_result, _error, id) => [{ type: "MarketingSource", id }, { type: "MarketingSource", id: "LIST" }],
+        }),
+    }),
+});
 
-    async getAll(
-        params?: {
-            is_active?: boolean;
-
-            type?: string;
-
-            search?: string;
-        }
-    ): Promise<MarketingSource[]> {
-
-
-        const response =
-            await apiClient.get<MarketingSource[]>(
-                "/admin/marketing-sources",
-                {
-                    params,
-                }
-            );
-
-
-        return response.data;
-    },
-
-
-
-    async getById(
-        id:number,
-    ): Promise<MarketingSource> {
-
-
-        const response =
-            await apiClient.get<MarketingSource>(
-                `/admin/marketing-sources/${id}`
-            );
-
-
-        return response.data;
-    },
-
-
-
-    async create(
-        data:CreateMarketingSourceDto,
-    ): Promise<MarketingSource> {
-
-
-        const response =
-            await apiClient.post<MarketingSource>(
-                "/admin/marketing-sources",
-                data,
-            );
-
-
-        return response.data;
-    },
-
-
-
-    async update(
-        id:number,
-        data:UpdateMarketingSourceDto,
-    ): Promise<MarketingSource> {
-
-
-        const response =
-            await apiClient.patch<MarketingSource>(
-                `/admin/marketing-sources/${id}`,
-                data,
-            );
-
-
-        return response.data;
-    },
-
-
-
-    async delete(
-        id:number,
-    ): Promise<MarketingSource> {
-
-
-        const response =
-            await apiClient.delete<MarketingSource>(
-                `/admin/marketing-sources/${id}`,
-            );
-
-
-        return response.data;
-    },
-
-
-
-    async restore(
-        id:number,
-    ): Promise<MarketingSource> {
-
-
-        const response =
-            await apiClient.post<MarketingSource>(
-                `/admin/marketing-sources/${id}/restore`,
-            );
-
-
-        return response.data;
-    },
-
-
-
-    async getUsers(
-        id:number,
-    ): Promise<MarketingSourceUsersResponse> {
-
-
-        const response =
-            await apiClient.get<MarketingSourceUsersResponse>(
-                `/admin/marketing-sources/${id}/users`,
-            );
-
-
-        return response.data;
-    },
-
-};
+export const {
+    useGetMarketingSourcesQuery,
+    useGetMarketingSourceQuery,
+    useGetMarketingSourceUsersQuery,
+    useCreateMarketingSourceMutation,
+    useUpdateMarketingSourceMutation,
+    useDeleteMarketingSourceMutation,
+    useRestoreMarketingSourceMutation,
+} = marketingSourceApi;

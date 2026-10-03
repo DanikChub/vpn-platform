@@ -1,3 +1,1 @@
-export {
-    marketingSourceApi,
-} from "./marketing-source.api";
+export * from "./marketing-source.api";

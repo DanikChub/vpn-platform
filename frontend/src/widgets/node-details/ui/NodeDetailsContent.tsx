@@ -1,18 +1,14 @@
 import {
-    HardDrive,
-} from "lucide-react";
-
-import {
-    type VpnNode, vpnNodeApi,
+    type VpnNode,
+    useInstallVpnNodeAgentMutation,
+    useUpdateVpnNodeFieldMutation,
 } from "@/entities/vpn-node";
 
 import {
     Badge, Button,
     Card,
     CardContent,
-    DetailsRow,
-    EmptyState, Input, Modal,
-    Spinner,
+    DetailsRow, Input, Modal,
 } from "@/shared/ui";
 
 import {
@@ -22,65 +18,13 @@ import {useState} from "react";
 
 
 interface NodeDetailsContentProps {
-    node:
-        | VpnNode
-        | null;
-
-    isLoading: boolean;
-
-    errorMessage:
-        | string
-        | null;
-
-    onReload: () =>
-        Promise<void>;
+    node: VpnNode;
 }
 
 
 const NodeDetailsContent = ({
                                 node,
-                                isLoading,
-                                errorMessage,
-                                onReload
                             }: NodeDetailsContentProps) => {
-    if (errorMessage) {
-        return (
-            <div
-                className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-                role="alert"
-            >
-                {errorMessage}
-            </div>
-        );
-    }
-
-
-    if (isLoading) {
-        return (
-            <Card>
-                <CardContent className="flex min-h-72 items-center justify-center">
-                    <Spinner
-                        size="lg"
-                    />
-                </CardContent>
-            </Card>
-        );
-    }
-
-
-    if (!node) {
-        return (
-            <EmptyState
-                description="Нода отсутствует или была удалена."
-                icon={
-                    <HardDrive className="size-6" />
-                }
-                title="Нода не найдена"
-            />
-        );
-    }
-
-
     return (
         <div className="space-y-5">
 
@@ -122,9 +66,6 @@ const NodeDetailsContent = ({
 
                 <HappNodePreview
                     node={node}
-                    onUpdated={() => {
-                        void onReload();
-                    }}
                 />
 
             </div>
@@ -219,17 +160,11 @@ const NodeDetailsContent = ({
 
                 <NodeConnectionSettings
                     node={node}
-                    onUpdated={() => {
-                        void onReload();
-                    }}
                 />
 
 
                 <NodeRealitySettings
                     node={node}
-                    onUpdated={() => {
-                        void onReload();
-                    }}
                 />
 
             </div>
@@ -347,16 +282,11 @@ function NodeStatusBadge({
 
 interface HappNodePreviewProps {
     node: VpnNode;
-
-    onUpdated?: (
-        node: VpnNode,
-    ) => void;
 }
 
 
 function HappNodePreview({
                              node,
-                             onUpdated,
                          }: HappNodePreviewProps) {
     const [
         isOpen,
@@ -379,10 +309,8 @@ function HappNodePreview({
         "",
     );
 
-    const [
-        isSaving,
-        setIsSaving,
-    ] = useState(false);
+    const [updateVpnNodeField, { isLoading: isSaving }] =
+        useUpdateVpnNodeFieldMutation();
 
 
     const country =
@@ -409,57 +337,25 @@ function HappNodePreview({
     };
 
 
-    const handleSave =
-        async () => {
-            setIsSaving(true);
+    const handleSave = async () => {
+        if (displayName !== (node.display_name ?? node.name)) {
+            await updateVpnNodeField({
+                nodeId: node.id,
+                field: "display_name",
+                value: displayName,
+            }).unwrap();
+        }
 
-            try {
-                let updatedNode =
-                    node;
+        if (countryCode !== (node.country_code ?? "")) {
+            await updateVpnNodeField({
+                nodeId: node.id,
+                field: "country_code",
+                value: countryCode || null,
+            }).unwrap();
+        }
 
-                if (
-                    displayName !==
-                    (
-                        node.display_name ??
-                        node.name
-                    )
-                ) {
-                    updatedNode =
-                        await vpnNodeApi
-                            .updateField(
-                                node.id,
-                                "display_name",
-                                displayName,
-                            );
-                }
-
-                if (
-                    countryCode !==
-                    (
-                        node.country_code ??
-                        ""
-                    )
-                ) {
-                    updatedNode =
-                        await vpnNodeApi
-                            .updateField(
-                                node.id,
-                                "country_code",
-                                countryCode ||
-                                null,
-                            );
-                }
-
-                onUpdated?.(
-                    updatedNode,
-                );
-
-                setIsOpen(false);
-
-            } finally {
-                setIsSaving(false);
-            }
-        };
+        setIsOpen(false);
+    };
 
 
     return (
@@ -894,12 +790,10 @@ function formatUptime(
 
 interface NodeConnectionSettingsProps {
     node: VpnNode;
-    onUpdated: () => void;
 }
 
 function NodeConnectionSettings({
                                     node,
-                                    onUpdated,
                                 }: NodeConnectionSettingsProps) {
     const [isOpen, setIsOpen] =
         useState(false);
@@ -916,11 +810,8 @@ function NodeConnectionSettings({
     const [sshUser, setSshUser] =
         useState(node.ssh_user);
 
-    const [inboundTag, setInboundTag] =
-        useState(node.inbound_tag);
-
-    const [isSaving, setIsSaving] =
-        useState(false);
+    const [updateVpnNodeField, { isLoading: isSaving }] =
+        useUpdateVpnNodeFieldMutation();
 
     const handleOpen = () => {
         setHost(node.host);
@@ -933,45 +824,18 @@ function NodeConnectionSettings({
     };
 
     const handleSave = async () => {
-        setIsSaving(true);
+            await updateVpnNodeField({ nodeId: node.id, field: "host", value: host }).unwrap();
 
-        try {
-            await vpnNodeApi.updateField(
-                node.id,
-                "host",
-                host,
-            );
+            await updateVpnNodeField({ nodeId: node.id, field: "port", value: Number(port) }).unwrap();
 
-            await vpnNodeApi.updateField(
-                node.id,
-                "port",
-                Number(port),
-            );
+            await updateVpnNodeField({ nodeId: node.id, field: "ssh_port", value: Number(sshPort) }).unwrap();
 
-            await vpnNodeApi.updateField(
-                node.id,
-                "ssh_port",
-                Number(sshPort),
-            );
+            await updateVpnNodeField({ nodeId: node.id, field: "ssh_user", value: sshUser }).unwrap();
 
-            await vpnNodeApi.updateField(
-                node.id,
-                "ssh_user",
-                sshUser,
-            );
+            await updateVpnNodeField({ nodeId: node.id, field: "inbound_tag", value: inboundTag }).unwrap();
 
-            await vpnNodeApi.updateField(
-                node.id,
-                "inbound_tag",
-                inboundTag,
-            );
-
+            
             setIsOpen(false);
-            onUpdated();
-
-        } finally {
-            setIsSaving(false);
-        }
     };
 
     return (
@@ -1097,12 +961,10 @@ function NodeConnectionSettings({
 
 interface NodeRealitySettingsProps {
     node: VpnNode;
-    onUpdated: () => void;
 }
 
 function NodeRealitySettings({
                                  node,
-                                 onUpdated,
                              }: NodeRealitySettingsProps) {
     const [isOpen, setIsOpen] =
         useState(false);
@@ -1116,8 +978,8 @@ function NodeRealitySettings({
     const [shortId, setShortId] =
         useState(node.reality_short_id ?? "");
 
-    const [isSaving, setIsSaving] =
-        useState(false);
+    const [updateVpnNodeField, { isLoading: isSaving }] =
+        useUpdateVpnNodeFieldMutation();
 
     const handleOpen = () => {
         setServerName(
@@ -1136,33 +998,14 @@ function NodeRealitySettings({
     };
 
     const handleSave = async () => {
-        setIsSaving(true);
+            await updateVpnNodeField({ nodeId: node.id, field: "reality_server_name", value: serverName }).unwrap();
 
-        try {
-            await vpnNodeApi.updateField(
-                node.id,
-                "reality_server_name",
-                serverName,
-            );
+            await updateVpnNodeField({ nodeId: node.id, field: "reality_public_key", value: publicKey }).unwrap();
 
-            await vpnNodeApi.updateField(
-                node.id,
-                "reality_public_key",
-                publicKey,
-            );
+            await updateVpnNodeField({ nodeId: node.id, field: "reality_short_id", value: shortId }).unwrap();
 
-            await vpnNodeApi.updateField(
-                node.id,
-                "reality_short_id",
-                shortId,
-            );
-
+            
             setIsOpen(false);
-            onUpdated();
-
-        } finally {
-            setIsSaving(false);
-        }
     };
 
     return (
@@ -1211,10 +1054,7 @@ function NodeRealitySettings({
                             </div>
 
                             <div className="mt-5 border-t border-slate-200 pt-5">
-                                <InstallAgentButton
-                                    node={node}
-                                    onInstalled={onUpdated}
-                                />
+                                <InstallAgentButton node={node} />
                             </div>
                         </div>
                     </CardContent>
@@ -1286,21 +1126,16 @@ function NodeRealitySettings({
 
 interface InstallAgentButtonProps {
     node: VpnNode;
-    onInstalled: () => void;
 }
 
 function InstallAgentButton({
                                 node,
-                                onInstalled,
                             }: InstallAgentButtonProps) {
     const [isOpen, setIsOpen] =
         useState(false);
 
-    const [sshPassword, setSshPassword] =
-        useState("");
-
-    const [isInstalling, setIsInstalling] =
-        useState(false);
+    const [installAgent, { isLoading: isInstalling }] =
+        useInstallVpnNodeAgentMutation();
 
     const [error, setError] =
         useState<string | null>(null);
@@ -1320,20 +1155,15 @@ function InstallAgentButton({
             return;
         }
 
-        setIsInstalling(true);
         setError(null);
-
         try {
-            await vpnNodeApi.installAgent(
-                node.id,
+            await installAgent({
+                nodeId: node.id,
                 sshPassword,
-            );
+            }).unwrap();
 
             setSshPassword("");
             setIsOpen(false);
-
-            onInstalled();
-
         } catch (error) {
             setError(
                 error instanceof Error
@@ -1341,8 +1171,6 @@ function InstallAgentButton({
                     : "Не удалось установить агент",
             );
 
-        } finally {
-            setIsInstalling(false);
         }
     };
 

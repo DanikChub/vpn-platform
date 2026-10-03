@@ -1,5 +1,10 @@
 export {
     planApi,
+    useGetPlansQuery,
+    useGetPlanQuery,
+    useCreatePlanMutation,
+    useUpdatePlanMutation,
+    useDeletePlanMutation,
 } from "./api";
 
 export type {
@@ -12,6 +17,4 @@ export type {
     UpdatePlanResponse,
 } from "./model";
 
-export {
-    PlansTable,
-} from "./ui";
+export { PlansTable } from "./ui";

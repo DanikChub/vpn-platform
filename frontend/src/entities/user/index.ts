@@ -1,6 +1,11 @@
-
 export {
     userApi,
+    useGetUsersQuery,
+    useGetUserQuery,
+    useExtendUserSubscriptionMutation,
+    useExpireUserSubscriptionMutation,
+    useBlockUserSubscriptionMutation,
+    useUnblockUserSubscriptionMutation,
 } from "./api";
 
 export type {
@@ -21,8 +26,4 @@ export type {
     UsersSortBy,
 } from "./model";
 
-export {
-    UserSubscriptionBadge,
-    UsersTable,
-} from "./ui";
-
+export { UserSubscriptionBadge, UsersTable } from "./ui";

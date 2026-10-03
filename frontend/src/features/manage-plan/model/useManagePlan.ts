@@ -1,138 +1,68 @@
 import {
-    useState,
-} from "react";
-
-import {
-    planApi,
+    useCreatePlanMutation,
+    useDeletePlanMutation,
+    useUpdatePlanMutation,
     type CreatePlanPayload,
     type UpdatePlanPayload,
 } from "@/entities/plan";
 
-import {
-    getApiErrorMessage,
-} from "@/shared/api";
+const useManagePlan = () => {
+    const [createMutation, createState] = useCreatePlanMutation();
+    const [updateMutation, updateState] = useUpdatePlanMutation();
+    const [deleteMutation, deleteState] = useDeletePlanMutation();
 
-
-export type ManagePlanAction =
-    | "create"
-    | "update"
-    | "delete";
-
-
-interface UseManagePlanOptions {
-    onSuccess: () =>
-        | void
-        | Promise<void>;
-}
-
-
-const useManagePlan = ({
-                           onSuccess,
-                       }: UseManagePlanOptions) => {
-    const [
-        activeAction,
-        setActiveAction,
-    ] =
-        useState<ManagePlanAction | null>(
-            null
-        );
-
-    const [
-        errorMessage,
-        setErrorMessage,
-    ] =
-        useState<string | null>(
-            null
-        );
-
-
-    const executeAction = async (
-        action: ManagePlanAction,
-        callback: () => Promise<unknown>
-    ): Promise<boolean> => {
-        setActiveAction(action);
-        setErrorMessage(null);
-
+    const createPlan = async (payload: CreatePlanPayload): Promise<boolean> => {
         try {
-            await callback();
-            await onSuccess();
-
+            await createMutation(payload).unwrap();
             return true;
-        } catch (error: unknown) {
-            setErrorMessage(
-                getApiErrorMessage(
-                    error
-                )
-            );
-
+        } catch {
             return false;
-        } finally {
-            setActiveAction(null);
         }
     };
 
-
-    const createPlan = (
-        payload: CreatePlanPayload
-    ): Promise<boolean> => {
-        return executeAction(
-            "create",
-            () =>
-                planApi.create(
-                    payload
-                )
-        );
+    const updatePlan = async (planId: number, payload: UpdatePlanPayload): Promise<boolean> => {
+        try {
+            await updateMutation({ planId, payload }).unwrap();
+            return true;
+        } catch {
+            return false;
+        }
     };
 
-
-    const updatePlan = (
-        planId: number,
-        payload: UpdatePlanPayload
-    ): Promise<boolean> => {
-        return executeAction(
-            "update",
-            () =>
-                planApi.update(
-                    planId,
-                    payload
-                )
-        );
+    const deletePlan = async (planId: number): Promise<boolean> => {
+        try {
+            await deleteMutation(planId).unwrap();
+            return true;
+        } catch {
+            return false;
+        }
     };
 
+    const activeAction =
+        createState.isLoading ? "create" :
+        updateState.isLoading ? "update" :
+        deleteState.isLoading ? "delete" :
+        null;
 
-    const deletePlan = (
-        planId: number
-    ): Promise<boolean> => {
-        return executeAction(
-            "delete",
-            () =>
-                planApi.deleteById(
-                    planId
-                )
-        );
-    };
-
+    const hasError = createState.isError || updateState.isError || deleteState.isError;
 
     return {
         status: {
             activeAction,
-            errorMessage,
-
-            isLoading:
-                activeAction !== null,
+            errorMessage: hasError ? "Не удалось выполнить операцию с тарифом" : null,
+            isLoading: activeAction !== null,
         },
-
         actions: {
             createPlan,
             updatePlan,
             deletePlan,
-
             clearError: () => {
-                setErrorMessage(null);
+                createState.reset();
+                updateState.reset();
+                deleteState.reset();
             },
         },
     };
 };
-
 
 export default useManagePlan;
