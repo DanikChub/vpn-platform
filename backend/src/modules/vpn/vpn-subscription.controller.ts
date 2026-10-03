@@ -119,8 +119,17 @@ class VpnSubscriptionController {
 
 
         if (wantsHtml) {
+            const publicApiUrl =
+                process.env.PUBLIC_API_URL;
+
+            if (!publicApiUrl) {
+                throw new Error(
+                    "PUBLIC_API_URL is not configured"
+                );
+            }
+
             const subscriptionUrl =
-                `${req.protocol}://${req.get("host")}${req.originalUrl}`;
+                `${publicApiUrl.replace(/\/$/, "")}${req.originalUrl}`;
 
             res
                 .status(200)
