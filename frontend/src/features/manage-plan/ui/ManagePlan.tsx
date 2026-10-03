@@ -7,9 +7,6 @@ import type {
     Plan,
 } from "@/entities/plan";
 import {
-    useDialog,
-} from "@/shared/lib";
-import {
     Button,
 } from "@/shared/ui";
 
@@ -24,8 +21,6 @@ interface ManagePlanProps {
     isFormOpen: boolean;
     onOpenCreate: () => void;
     onCloseForm: () => void;
-    planToDelete: Plan | null;
-    onDeleteFinished: () => void;
 }
 
 
@@ -34,11 +29,7 @@ export function ManagePlan({
                                isFormOpen,
                                onOpenCreate,
                                onCloseForm,
-                               planToDelete,
-                               onDeleteFinished,
                            }: ManagePlanProps) {
-    const { confirm } = useDialog();
-
     const {
         status,
         actions,
@@ -59,36 +50,6 @@ export function ManagePlan({
             payload
         );
     };
-
-
-    const confirmDelete =
-        async (plan: Plan): Promise<void> => {
-            const confirmed =
-                await confirm({
-                    title: "Удалить тариф?",
-                    description: `Тариф «${plan.name}» будет удалён без возможности восстановления. Тариф с существующими заказами удалить нельзя.`,
-                    confirmText: "Удалить тариф",
-                    variant: "danger",
-                });
-
-            if (!confirmed) {
-                onDeleteFinished();
-                return;
-            }
-
-            await actions.deletePlan(
-                plan.id
-            );
-
-            onDeleteFinished();
-        };
-
-
-    if (planToDelete) {
-        void confirmDelete(
-            planToDelete
-        );
-    }
 
 
     return (
