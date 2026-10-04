@@ -97,6 +97,35 @@ adminNodesRouter.get(
         ),
 );
 
+adminNodesRouter.get(
+    "/:id/traffic-period",
+
+    requirePermission(
+        "nodes.read",
+    ),
+
+    adminNodesController
+        .getTrafficPeriod
+        .bind(
+            adminNodesController,
+        ),
+);
+
+
+adminNodesRouter.post(
+    "/:id/traffic-period",
+
+    requirePermission(
+        "nodes.update",
+    ),
+
+    adminNodesController
+        .setTrafficPeriod
+        .bind(
+            adminNodesController,
+        ),
+);
+
 adminNodesRouter.delete(
     "/:id",
 

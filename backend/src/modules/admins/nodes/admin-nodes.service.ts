@@ -26,6 +26,18 @@ import type {
     NodeSyncService,
 } from "../../vpn/node-sync.service";
 
+import {
+    Op,
+} from "sequelize";
+
+import VpnNodeTrafficPeriod
+    from "../../traffic/vpn-node-traffic-period.model";
+
+import type {
+    SetNodeTrafficPeriodDto,
+    NodeTrafficPeriodResponse,
+} from "./admin-nodes.types";
+
 
 class AdminNodesService {
 
@@ -424,6 +436,282 @@ class AdminNodesService {
         }
 
         return node.toJSON();
+    }
+
+    public async getCurrentTrafficPeriod(
+        nodeId: number,
+    ): Promise<NodeTrafficPeriodResponse | null> {
+
+        const now =
+            new Date();
+
+
+        const period =
+            await VpnNodeTrafficPeriod
+                .findOne({
+                    where: {
+                        node_id:
+                        nodeId,
+
+                        started_at: {
+                            [Op.lte]:
+                            now,
+                        },
+
+                        [Op.or]: [
+                            {
+                                ends_at: {
+                                    [Op.gt]:
+                                    now,
+                                },
+                            },
+
+                            {
+                                ends_at:
+                                    null,
+                            },
+                        ],
+                    },
+
+                    order: [
+                        [
+                            "started_at",
+                            "DESC",
+                        ],
+                    ],
+                });
+
+
+        if (!period) {
+            return null;
+        }
+
+
+        return this.mapTrafficPeriod(
+            period,
+        );
+    }
+
+
+    public async setTrafficPeriod(
+        nodeId: number,
+        dto: SetNodeTrafficPeriodDto,
+    ): Promise<NodeTrafficPeriodResponse | null> {
+
+        const node =
+            await VpnNode.findByPk(
+                nodeId,
+            );
+
+
+        if (!node) {
+            return null;
+        }
+
+
+        const startedAt =
+            new Date(
+                dto.startedAt,
+            );
+
+
+        if (
+            Number.isNaN(
+                startedAt.getTime(),
+            )
+        ) {
+            throw new Error(
+                "Invalid startedAt",
+            );
+        }
+
+
+        let endsAt:
+            Date | null =
+            null;
+
+
+        if (dto.endsAt !== null) {
+
+            endsAt =
+                new Date(
+                    dto.endsAt,
+                );
+
+
+            if (
+                Number.isNaN(
+                    endsAt.getTime(),
+                )
+            ) {
+                throw new Error(
+                    "Invalid endsAt",
+                );
+            }
+
+
+            if (
+                endsAt <=
+                startedAt
+            ) {
+                throw new Error(
+                    "endsAt must be after startedAt",
+                );
+            }
+        }
+
+
+        let limitBytes:
+            string | null =
+            null;
+
+
+        if (
+            dto.limitBytes !==
+            null
+        ) {
+
+            if (
+                typeof dto.limitBytes !==
+                "string" ||
+                !/^\d+$/.test(
+                    dto.limitBytes,
+                )
+            ) {
+                throw new Error(
+                    "Invalid limitBytes",
+                );
+            }
+
+
+            const parsedLimit =
+                BigInt(
+                    dto.limitBytes,
+                );
+
+
+            if (
+                parsedLimit <= 0n
+            ) {
+                throw new Error(
+                    "limitBytes must be greater than zero",
+                );
+            }
+
+
+            limitBytes =
+                parsedLimit
+                    .toString();
+        }
+
+
+        /*
+         * Пока запрещаем пересекающиеся периоды.
+         *
+         * Иначе TrafficService мог бы выбрать
+         * один из двух активных периодов,
+         * и статистика стала бы неоднозначной.
+         */
+        const overlappingPeriod =
+            await VpnNodeTrafficPeriod
+                .findOne({
+                    where: {
+                        node_id:
+                        nodeId,
+
+                        started_at: {
+                            [Op.lt]:
+                                endsAt ??
+                                new Date(
+                                    "9999-12-31T23:59:59.999Z",
+                                ),
+                        },
+
+                        [Op.or]: [
+                            {
+                                ends_at:
+                                    null,
+                            },
+
+                            {
+                                ends_at: {
+                                    [Op.gt]:
+                                    startedAt,
+                                },
+                            },
+                        ],
+                    },
+                });
+
+
+        if (overlappingPeriod) {
+            throw new Error(
+                "Traffic period overlaps existing period",
+            );
+        }
+
+
+        const period =
+            await VpnNodeTrafficPeriod
+                .create({
+                    node_id:
+                    nodeId,
+
+                    started_at:
+                    startedAt,
+
+                    ends_at:
+                    endsAt,
+
+                    limit_bytes:
+                    limitBytes,
+
+                    used_bytes:
+                        "0",
+
+                    created_at:
+                        new Date(),
+
+                    updated_at:
+                        new Date(),
+                });
+
+
+        return this.mapTrafficPeriod(
+            period,
+        );
+    }
+
+
+    private mapTrafficPeriod(
+        period: VpnNodeTrafficPeriod,
+    ): NodeTrafficPeriodResponse {
+
+        return {
+            id:
+            period.id,
+
+            nodeId:
+            period.node_id,
+
+            startedAt:
+            period.started_at,
+
+            endsAt:
+            period.ends_at,
+
+            limitBytes:
+            period.limit_bytes,
+
+            usedBytes:
+            period.used_bytes,
+
+            createdAt:
+            period.created_at,
+
+            updatedAt:
+            period.updated_at,
+        };
     }
 
     public async delete(

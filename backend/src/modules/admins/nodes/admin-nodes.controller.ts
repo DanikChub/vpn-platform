@@ -387,6 +387,194 @@ class AdminNodesController {
         }
     }
 
+    async getTrafficPeriod(
+        req: Request,
+        res: Response,
+    ): Promise<void> {
+
+        try {
+
+            const nodeId =
+                Number(
+                    req.params.id,
+                );
+
+
+            if (
+                !Number.isInteger(
+                    nodeId,
+                ) ||
+                nodeId <= 0
+            ) {
+                res.status(400).json({
+                    error:
+                        "Invalid node id",
+                });
+
+                return;
+            }
+
+
+            const period =
+                await adminNodesService
+                    .getCurrentTrafficPeriod(
+                        nodeId,
+                    );
+
+
+            res.json(
+                period,
+            );
+
+        } catch (error) {
+
+            res.status(500).json({
+                error:
+                    error instanceof Error
+                        ? error.message
+                        : String(error),
+            });
+        }
+    }
+
+
+    async setTrafficPeriod(
+        req: Request,
+        res: Response,
+    ): Promise<void> {
+
+        try {
+
+            const nodeId =
+                Number(
+                    req.params.id,
+                );
+
+
+            if (
+                !Number.isInteger(
+                    nodeId,
+                ) ||
+                nodeId <= 0
+            ) {
+                res.status(400).json({
+                    error:
+                        "Invalid node id",
+                });
+
+                return;
+            }
+
+
+            const {
+                startedAt,
+                endsAt = null,
+                limitBytes = null,
+            } = req.body;
+
+
+            if (
+                typeof startedAt !==
+                "string"
+            ) {
+                res.status(400).json({
+                    error:
+                        "startedAt is required",
+                });
+
+                return;
+            }
+
+
+            if (
+                endsAt !== null &&
+                typeof endsAt !==
+                "string"
+            ) {
+                res.status(400).json({
+                    error:
+                        "Invalid endsAt",
+                });
+
+                return;
+            }
+
+
+            if (
+                limitBytes !== null &&
+                typeof limitBytes !==
+                "string"
+            ) {
+                res.status(400).json({
+                    error:
+                        "Invalid limitBytes",
+                });
+
+                return;
+            }
+
+
+            const period =
+                await adminNodesService
+                    .setTrafficPeriod(
+                        nodeId,
+                        {
+                            startedAt,
+                            endsAt,
+                            limitBytes,
+                        },
+                    );
+
+
+            if (!period) {
+                res.status(404).json({
+                    error:
+                        "Node not found",
+                });
+
+                return;
+            }
+
+
+            res.status(201).json(
+                period,
+            );
+
+        } catch (error) {
+
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : String(error);
+
+
+            if (
+                message.startsWith(
+                    "Invalid",
+                ) ||
+                message.includes(
+                    "must be",
+                ) ||
+                message.includes(
+                    "overlaps",
+                )
+            ) {
+                res.status(400).json({
+                    error:
+                    message,
+                });
+
+                return;
+            }
+
+
+            res.status(500).json({
+                error:
+                message,
+            });
+        }
+    }
+
     async delete(
         req: Request,
         res: Response,

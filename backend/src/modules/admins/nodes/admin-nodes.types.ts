@@ -94,3 +94,30 @@ export interface UpdateNodeFieldDto {
     field: EditableNodeField;
     value: unknown;
 }
+
+export interface SetNodeTrafficPeriodDto {
+    startedAt: string;
+    endsAt: string | null;
+
+    /*
+     * Передаём строкой, потому что bytes
+     * могут быть больше безопасного integer
+     * в других сценариях.
+     */
+    limitBytes: string | null;
+}
+
+
+export interface NodeTrafficPeriodResponse {
+    id: number;
+    nodeId: number;
+
+    startedAt: Date;
+    endsAt: Date | null;
+
+    limitBytes: string | null;
+    usedBytes: string;
+
+    createdAt: Date;
+    updatedAt: Date;
+}
