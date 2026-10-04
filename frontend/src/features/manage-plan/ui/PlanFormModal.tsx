@@ -1,5 +1,4 @@
 import {
-    useEffect,
     useState,
 } from "react";
 
@@ -17,6 +16,8 @@ import {
     Input,
     Modal,
 } from "@/shared/ui";
+import {toast} from "sonner";
+import {getApiErrorMessage} from "@/shared/api";
 
 
 interface PlanFormModalProps {
@@ -31,7 +32,7 @@ interface PlanFormModalProps {
 
     onSubmit: (
         payload: CreatePlanPayload
-    ) => Promise<boolean>;
+    ) => Promise<void>;
 }
 
 
@@ -60,6 +61,36 @@ const EMPTY_FORM: PlanFormState = {
     isActive: true,
 };
 
+function getInitialForm(
+    plan: Plan | null
+): PlanFormState {
+    if (!plan) {
+        return {
+            ...EMPTY_FORM,
+        };
+    }
+
+    return {
+        name:
+        plan.name,
+
+        durationDays:
+            String(
+                plan.durationDays
+            ),
+
+        priceRubles:
+            String(
+                plan.priceAmount / 100
+            ),
+
+        currency:
+        plan.currency,
+
+        isActive:
+        plan.isActive,
+    };
+}
 
 export function PlanFormModal({
                                   isOpen,
@@ -73,7 +104,8 @@ export function PlanFormModal({
         setForm,
     ] =
         useState<PlanFormState>(
-            EMPTY_FORM
+            () =>
+                getInitialForm(plan)
         );
 
     const [
@@ -85,43 +117,7 @@ export function PlanFormModal({
         );
 
 
-    useEffect(() => {
-        if (!isOpen) {
-            return;
-        }
 
-        if (plan) {
-            setForm({
-                name:
-                plan.name,
-
-                durationDays:
-                    String(
-                        plan.durationDays
-                    ),
-
-                priceRubles:
-                    String(
-                        plan.priceAmount / 100
-                    ),
-
-                currency:
-                plan.currency,
-
-                isActive:
-                plan.isActive,
-            });
-        } else {
-            setForm(
-                EMPTY_FORM
-            );
-        }
-
-        setErrors({});
-    }, [
-        isOpen,
-        plan,
-    ]);
 
 
     const updateField = <
@@ -169,7 +165,7 @@ export function PlanFormModal({
                     ) * 100
                 );
 
-            const isSuccessful =
+            try {
                 await onSubmit({
                     name:
                         form.name.trim(),
@@ -187,8 +183,19 @@ export function PlanFormModal({
                     form.isActive,
                 });
 
-            if (isSuccessful) {
+                toast.success(
+                    plan
+                        ? "Тариф обновлён"
+                        : "Тариф создан"
+                );
+
                 onClose();
+            } catch (error) {
+                toast.error(
+                    getApiErrorMessage(
+                        error
+                    )
+                );
             }
         };
 

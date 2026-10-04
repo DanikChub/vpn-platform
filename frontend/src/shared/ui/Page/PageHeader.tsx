@@ -30,20 +30,20 @@ export function PageHeader({
                 className
             )}
         >
-            <div className="flex min-w-0 items-start gap-4">
+            <div className="flex min-w-0 items-center gap-3">
                 {icon && (
-                    <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-white">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-slate-950 text-white">
                         {icon}
                     </div>
                 )}
 
                 <div className="min-w-0">
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                    <h1 className="text-xl font-semibold tracking-tight text-slate-950">
                         {title}
                     </h1>
 
                     {description && (
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                        <p className="mt-0.5 text-sm leading-5 text-slate-500">
                             {description}
                         </p>
                     )}
@@ -51,7 +51,7 @@ export function PageHeader({
             </div>
 
             {actions && (
-                <div className="flex shrink-0 flex-wrap items-center gap-3">
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
                     {actions}
                 </div>
             )}

@@ -47,7 +47,7 @@ export const Input =
             return (
                 <div
                     className={cn(
-                        "space-y-2",
+                        "space-y-1.5",
                         containerClassName
                     )}
                 >
@@ -73,14 +73,14 @@ export const Input =
                                 Boolean(error)
                             }
                             className={cn(
-                                "h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-900 outline-none transition",
+                                "h-9 w-full rounded-md border bg-white px-3 text-sm text-slate-900 outline-none transition-colors",
                                 "placeholder:text-slate-400",
-                                "focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10",
+                                "focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10",
                                 "disabled:cursor-not-allowed disabled:bg-slate-100",
                                 leftIcon &&
-                                "pl-10",
+                                "pl-9",
                                 rightElement &&
-                                "pr-11",
+                                "pr-9",
                                 error
                                     ? "border-red-400 focus:border-red-500 focus:ring-red-500/10"
                                     : "border-slate-300",

@@ -57,18 +57,17 @@ const sizeClasses: Record<
     string
 > = {
     sm:
-        "h-9 px-3 text-xs",
+        "h-8 px-2.5 text-xs",
 
     md:
-        "h-11 px-4 text-sm",
+        "h-9 px-3 text-sm",
 
     lg:
-        "h-12 px-5 text-base",
+        "h-10 px-4 text-sm",
 
     icon:
-        "size-10 p-0",
+        "size-9 p-0",
 };
-
 export const Button =
     forwardRef<
         HTMLButtonElement,
@@ -101,8 +100,8 @@ export const Button =
                 <button
                     ref={ref}
                     className={cn(
-                        "inline-flex shrink-0 items-center justify-center gap-2 rounded-xl font-semibold outline-none transition",
-                        "focus-visible:ring-4 focus-visible:ring-slate-900/10",
+                        "inline-flex shrink-0 items-center justify-center gap-2 rounded-md font-medium outline-none transition-colors",
+                        "focus-visible:ring-2 focus-visible:ring-slate-900/15",
                         "disabled:cursor-not-allowed disabled:opacity-60",
                         variantClasses[variant],
                         sizeClasses[size],

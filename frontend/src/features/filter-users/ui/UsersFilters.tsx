@@ -1,5 +1,5 @@
 import type {UserSubscriptionFilter} from "@/entities/user";
-import {Card, CardContent, Input} from "@/shared/ui";
+import {Input} from "@/shared/ui";
 import {Search} from "lucide-react";
 
 interface UsersFiltersProps {
@@ -20,8 +20,8 @@ const UsersFilter = ({
                          onSubscriptionStatusChange
                      }: UsersFiltersProps) => {
     return (
-        <Card>
-            <CardContent>
+        <div>
+            <div>
                 <div className="flex flex-col gap-4 lg:flex-row">
                     <Input
                         containerClassName="flex-1"
@@ -34,7 +34,7 @@ const UsersFilter = ({
                     />
 
                     <select
-                        className="h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm"
+                        className="rounded-md border border-slate-300 bg-white px-4 py-1.5 text-sm"
                         onChange={(event) => {
                             onSubscriptionStatusChange(
                                 event.target.value as
@@ -64,8 +64,8 @@ const UsersFilter = ({
                         </option>
                     </select>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     )
 }
 

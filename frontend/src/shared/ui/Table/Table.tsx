@@ -16,7 +16,7 @@ export function TableContainer({
     return (
         <div
             className={cn(
-                "overflow-hidden rounded-2xl border border-slate-200 bg-white",
+                "overflow-hidden rounded-lg border border-slate-200 bg-white",
                 className
             )}
             {...props}
@@ -78,7 +78,7 @@ export function TableRow({
     return (
         <tr
             className={cn(
-                "transition hover:bg-slate-50",
+                "transition-colors hover:bg-slate-50",
                 className
             )}
             {...props}
@@ -93,7 +93,7 @@ export function TableHead({
     return (
         <th
             className={cn(
-                "whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500",
+                "whitespace-nowrap px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500",
                 className
             )}
             {...props}
@@ -108,7 +108,7 @@ export function TableCell({
     return (
         <td
             className={cn(
-                "whitespace-nowrap px-4 py-4 text-slate-700",
+                "whitespace-nowrap px-3 py-2.5 text-slate-700",
                 className
             )}
             {...props}

@@ -17,6 +17,10 @@ import {
     DialogProvider,
 } from "./DialogProvider";
 
+import {
+    Toaster,
+} from "sonner";
+
 
 export function AppProviders({
                                  children,
@@ -26,6 +30,11 @@ export function AppProviders({
             <AuthSessionInitializer>
                 <DialogProvider>
                     {children}
+
+                    <Toaster
+                        position="bottom-right"
+                        richColors
+                    />
                 </DialogProvider>
             </AuthSessionInitializer>
         </Provider>

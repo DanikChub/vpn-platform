@@ -20,6 +20,14 @@ import {
 } from "@/shared/ui";
 import NodesTable from "./NodesTable";
 
+import {
+    toast,
+} from "sonner";
+
+import {
+    getApiErrorMessage,
+} from "@/shared/api";
+
 
 const NodesList = () => {
     const navigate = useNavigate();
@@ -70,9 +78,19 @@ const NodesList = () => {
             return;
         }
 
-        await deleteVpnNode(
-            nodeId
-        ).unwrap();
+        try {
+            await deleteVpnNode(
+                nodeId
+            ).unwrap();
+
+            toast.success(
+                `Нода «${nodeName}» удалена`
+            );
+        } catch (error) {
+            toast.error(
+                getApiErrorMessage(error)
+            );
+        }
     };
 
 

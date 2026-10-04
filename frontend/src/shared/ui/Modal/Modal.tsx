@@ -44,7 +44,7 @@ export function Modal({
         >
             <Dialog.Portal>
                 <Dialog.Overlay
-                    className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm"
+                    className="modal-overlay fixed inset-0 z-50 bg-slate-950/35"
                     onPointerDown={(event) => {
                         if (!closeOnBackdrop) {
                             event.preventDefault();
@@ -54,7 +54,7 @@ export function Modal({
 
                 <Dialog.Content
                     className={cn(
-                        "fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl",
+                        "modal-content fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl",
                         className
                     )}
                     onEscapeKeyDown={(event) => {
@@ -69,16 +69,16 @@ export function Modal({
                     }}
                 >
                     {(title || description) && (
-                        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+                        <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
                             <div>
                                 {title && (
-                                    <Dialog.Title className="text-lg font-semibold text-slate-950">
+                                    <Dialog.Title className="text-base font-semibold text-slate-950">
                                         {title}
                                     </Dialog.Title>
                                 )}
 
                                 {description && (
-                                    <Dialog.Description className="mt-1 text-sm leading-6 text-slate-500">
+                                    <Dialog.Description className="mt-1 text-sm leading-5 text-slate-500">
                                         {description}
                                     </Dialog.Description>
                                 )}
@@ -87,12 +87,12 @@ export function Modal({
                             <Dialog.Close asChild>
                                 <button
                                     aria-label="Закрыть"
-                                    className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                                    className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                                     type="button"
                                 >
                                     <X
                                         aria-hidden="true"
-                                        className="size-5"
+                                        className="size-4"
                                     />
                                 </button>
                             </Dialog.Close>
@@ -111,12 +111,12 @@ export function Modal({
                         </Dialog.Description>
                     )}
 
-                    <div className="max-h-[60vh] overflow-y-auto p-6">
+                    <div className="max-h-[60vh] overflow-y-auto p-5">
                         {children}
                     </div>
 
                     {footer && (
-                        <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
+                        <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-5 py-3">
                             {footer}
                         </div>
                     )}

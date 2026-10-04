@@ -1,5 +1,4 @@
 import {
-    useEffect,
     useState,
 } from "react";
 
@@ -12,6 +11,8 @@ import {
     Input,
     Modal,
 } from "@/shared/ui";
+import {toast} from "sonner";
+import {getApiErrorMessage} from "@/shared/api";
 
 
 interface ExtendSubscriptionModalProps {
@@ -24,7 +25,7 @@ interface ExtendSubscriptionModalProps {
 
     onSubmit: (
         durationDays: number
-    ) => Promise<boolean>;
+    ) => Promise<unknown>;
 }
 
 
@@ -58,21 +59,7 @@ export function ExtendSubscriptionModal({
         );
 
 
-    useEffect(() => {
-        if (!isOpen) {
-            return;
-        }
 
-        setDurationDays(
-            String(
-                DEFAULT_DURATION_DAYS
-            )
-        );
-
-        setErrorMessage(null);
-    }, [
-        isOpen,
-    ]);
 
 
     const handleSubmit =
@@ -97,13 +84,24 @@ export function ExtendSubscriptionModal({
 
             setErrorMessage(null);
 
-            const isSuccessful =
+            try {
                 await onSubmit(
                     parsedDays
                 );
 
-            if (isSuccessful) {
+                toast.success(
+                    hasSubscription
+                        ? "Подписка продлена"
+                        : "Подписка выдана"
+                );
+
                 onClose();
+            } catch (error) {
+                toast.error(
+                    getApiErrorMessage(
+                        error
+                    )
+                );
             }
         };
 

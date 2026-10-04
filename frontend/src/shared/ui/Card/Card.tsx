@@ -13,7 +13,7 @@ export function Card({
     return (
         <div
             className={cn(
-                "rounded-2xl border border-slate-200 bg-white shadow-sm",
+                "rounded-sm border border-slate-200 bg-white",
                 className
             )}
             {...props}
@@ -28,7 +28,7 @@ export function CardHeader({
     return (
         <div
             className={cn(
-                "border-b border-slate-200 px-6 py-5",
+                "border-b border-slate-200 px-4 py-3",
                 className
             )}
             {...props}
@@ -43,7 +43,7 @@ export function CardContent({
     return (
         <div
             className={cn(
-                "p-6",
+                "p-4",
                 className
             )}
             {...props}
@@ -58,7 +58,7 @@ export function CardFooter({
     return (
         <div
             className={cn(
-                "flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4",
+                "flex items-center justify-end gap-2 border-t border-slate-200 px-4 py-3",
                 className
             )}
             {...props}

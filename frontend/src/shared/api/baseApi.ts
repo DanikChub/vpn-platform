@@ -4,10 +4,18 @@ import {
 import type {
     BaseQueryFn,
 } from "@reduxjs/toolkit/query";
+
 import type {
-    AxiosError,
     AxiosRequestConfig,
 } from "axios";
+
+import type {
+    ApiError,
+} from "./api.types";
+
+import {
+    normalizeApiError,
+} from "./normalizeApiError";
 
 import {
     sessionUnauthorized,
@@ -27,17 +35,12 @@ interface AxiosBaseQueryArgs {
 }
 
 
-interface AxiosBaseQueryError {
-    status?: number;
-    data?: unknown;
-}
-
 
 const axiosBaseQuery:
 BaseQueryFn<
     AxiosBaseQueryArgs,
     unknown,
-    AxiosBaseQueryError
+    ApiError
 > =
     async (
         {
@@ -61,14 +64,10 @@ BaseQueryFn<
                 data: response.data,
             };
         } catch (error) {
-            const axiosError =
-                error as AxiosError;
+            const apiError =
+                normalizeApiError(error);
 
-            const status =
-                axiosError.response
-                    ?.status;
-
-            if (status === 401) {
+            if (apiError.status === 401) {
                 tokenStorage.removeToken();
 
                 api.dispatch(
@@ -81,12 +80,7 @@ BaseQueryFn<
             }
 
             return {
-                error: {
-                    status,
-                    data:
-                        axiosError.response
-                            ?.data,
-                },
+                error: apiError,
             };
         }
     };

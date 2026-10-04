@@ -38,7 +38,7 @@ export function ManagePlan({
 
     const submitPlan = (
         payload: CreatePlanPayload
-    ): Promise<boolean> => {
+    ): Promise<void> => {
         if (formPlan) {
             return actions.updatePlan(
                 formPlan.id,
@@ -77,6 +77,11 @@ export function ManagePlan({
             )}
 
             <PlanFormModal
+                key={
+                    formPlan
+                        ? `edit-${formPlan.id}`
+                        : "create"
+                }
                 isLoading={
                     status.activeAction ===
                     "create" ||

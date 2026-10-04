@@ -13,7 +13,7 @@ export function Page({
     return (
         <section
             className={cn(
-                "mx-auto w-full max-w-screen-2xl p-6 lg:p-8",
+                "mx-auto w-full p-5 lg:p-6",
                 className
             )}
             {...props}
@@ -28,7 +28,7 @@ export function PageContent({
     return (
         <div
             className={cn(
-                "mt-6",
+                "mt-4",
                 className
             )}
             {...props}

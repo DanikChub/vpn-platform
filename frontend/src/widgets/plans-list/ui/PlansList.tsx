@@ -1,6 +1,4 @@
-import {
-    useState,
-} from "react";
+
 import {
     CreditCard,
 } from "lucide-react";
@@ -11,29 +9,29 @@ import {
     useDeletePlanMutation,
     useGetPlansQuery,
 } from "@/entities/plan";
-import {
-    ManagePlan,
-} from "@/features/manage-plan";
+
 import {
     useDialog,
 } from "@/shared/lib";
 import {
     AsyncContent,
 } from "@/shared/ui";
+import {toast} from "sonner";
+import {getApiErrorMessage} from "@/shared/api";
 
 
-export function PlansList() {
-    const [
-        formPlan,
-        setFormPlan,
-    ] = useState<Plan | null>(
-        null
-    );
+interface PlansListProps {
+    onEdit: (
+        plan: Plan
+    ) => void;
+}
 
-    const [
-        isFormOpen,
-        setIsFormOpen,
-    ] = useState(false);
+
+export function PlansList({
+                              onEdit,
+                          }: PlansListProps) {
+
+
 
     const { confirm } = useDialog();
 
@@ -52,25 +50,6 @@ export function PlansList() {
         data?.plans ?? [];
 
 
-    const openCreate = () => {
-        setFormPlan(null);
-        setIsFormOpen(true);
-    };
-
-
-    const openEdit = (
-        plan: Plan
-    ) => {
-        setFormPlan(plan);
-        setIsFormOpen(true);
-    };
-
-
-    const closeForm = () => {
-        setIsFormOpen(false);
-        setFormPlan(null);
-    };
-
 
     const handleDelete =
         async (plan: Plan): Promise<void> => {
@@ -86,22 +65,24 @@ export function PlansList() {
                 return;
             }
 
-            await deletePlan(
-                plan.id
-            ).unwrap();
+            try {
+                await deletePlan(
+                    plan.id
+                ).unwrap();
+
+                toast.success(
+                    `Тариф «${plan.name}» удалён`
+                );
+            } catch (error) {
+                toast.error(
+                    getApiErrorMessage(error)
+                );
+            }
         };
 
 
     return (
         <div className="space-y-5">
-            <div className="flex justify-end">
-                <ManagePlan
-                    formPlan={formPlan}
-                    isFormOpen={isFormOpen}
-                    onCloseForm={closeForm}
-                    onOpenCreate={openCreate}
-                />
-            </div>
 
             <AsyncContent
                 emptyDescription="Создайте первый тариф, чтобы пользователи могли покупать подписку."
@@ -122,7 +103,7 @@ export function PlansList() {
                     onDelete={(plan) => {
                         void handleDelete(plan);
                     }}
-                    onEdit={openEdit}
+                    onEdit={onEdit}
                     plans={plans}
                 />
             </AsyncContent>

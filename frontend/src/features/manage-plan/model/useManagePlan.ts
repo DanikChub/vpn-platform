@@ -1,6 +1,5 @@
 import {
     useCreatePlanMutation,
-    useDeletePlanMutation,
     useUpdatePlanMutation,
     type CreatePlanPayload,
     type UpdatePlanPayload,
@@ -9,42 +8,32 @@ import {
 const useManagePlan = () => {
     const [createMutation, createState] = useCreatePlanMutation();
     const [updateMutation, updateState] = useUpdatePlanMutation();
-    const [deleteMutation, deleteState] = useDeletePlanMutation();
 
-    const createPlan = async (payload: CreatePlanPayload): Promise<boolean> => {
-        try {
-            await createMutation(payload).unwrap();
-            return true;
-        } catch {
-            return false;
-        }
+    const createPlan = async (
+        payload: CreatePlanPayload
+    ): Promise<void> => {
+        await createMutation(
+            payload
+        ).unwrap();
     };
 
-    const updatePlan = async (planId: number, payload: UpdatePlanPayload): Promise<boolean> => {
-        try {
-            await updateMutation({ planId, payload }).unwrap();
-            return true;
-        } catch {
-            return false;
-        }
+    const updatePlan = async (
+        planId: number,
+        payload: UpdatePlanPayload
+    ): Promise<void> => {
+        await updateMutation({
+            planId,
+            payload,
+        }).unwrap();
     };
 
-    const deletePlan = async (planId: number): Promise<boolean> => {
-        try {
-            await deleteMutation(planId).unwrap();
-            return true;
-        } catch {
-            return false;
-        }
-    };
 
     const activeAction =
         createState.isLoading ? "create" :
         updateState.isLoading ? "update" :
-        deleteState.isLoading ? "delete" :
         null;
 
-    const hasError = createState.isError || updateState.isError || deleteState.isError;
+    const hasError = createState.isError || updateState.isError;
 
     return {
         status: {
@@ -55,11 +44,9 @@ const useManagePlan = () => {
         actions: {
             createPlan,
             updatePlan,
-            deletePlan,
             clearError: () => {
                 createState.reset();
                 updateState.reset();
-                deleteState.reset();
             },
         },
     };

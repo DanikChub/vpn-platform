@@ -24,12 +24,12 @@ export function EmptyState({
     return (
         <div
             className={cn(
-                "flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center",
+                "flex min-h-48 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white px-5 py-8 text-center",
                 className
             )}
         >
             {icon && (
-                <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                <div className="mb-3 flex size-9 items-center justify-center rounded-md bg-slate-100 text-slate-500">
                     {icon}
                 </div>
             )}
@@ -39,13 +39,13 @@ export function EmptyState({
             </h2>
 
             {description && (
-                <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
+                <p className="mt-1 max-w-md text-sm leading-5 text-slate-500">
                     {description}
                 </p>
             )}
 
             {action && (
-                <div className="mt-5">
+                <div className="mt-4">
                     {action}
                 </div>
             )}

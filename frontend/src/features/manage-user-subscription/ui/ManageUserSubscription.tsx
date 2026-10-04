@@ -30,6 +30,8 @@ import useManageUserSubscription from "../model";
 import {
     ExtendSubscriptionModal,
 } from "./ExtendSubscriptionModal";
+import {toast} from "sonner";
+import {getApiErrorMessage} from "@/shared/api";
 
 
 interface ManageUserSubscriptionProps {
@@ -61,13 +63,17 @@ export function ManageUserSubscription({
         subscription?.status ===
         "blocked";
 
+    const [now] = useState(
+        () => Date.now()
+    );
+
     const isExpired =
         !subscription ||
         subscription.status ===
         "expired" ||
         new Date(
             subscription.expiresAt
-        ).getTime() <= Date.now();
+        ).getTime() <= now;
 
     const hasActiveSubscription =
         Boolean(
@@ -83,17 +89,17 @@ export function ManageUserSubscription({
                    title,
                    description,
                    confirmText,
+                   successMessage,
                    action,
                    variant = "danger",
                }: {
             title: string;
             description: string;
             confirmText: string;
-            action: () => Promise<boolean>;
+            successMessage: string;
+            action: () => Promise<unknown>;
             variant?: "default" | "danger";
         }): Promise<void> => {
-            actions.clearError();
-
             const confirmed =
                 await confirm({
                     title,
@@ -106,8 +112,21 @@ export function ManageUserSubscription({
                 return;
             }
 
-            await action();
+            try {
+                await action();
+
+                toast.success(
+                    successMessage
+                );
+            } catch (error) {
+                toast.error(
+                    getApiErrorMessage(
+                        error
+                    )
+                );
+            }
         };
+
 
 
     return (
@@ -134,14 +153,6 @@ export function ManageUserSubscription({
                 </CardHeader>
 
                 <CardContent>
-                    {status.errorMessage && (
-                        <div
-                            className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-                            role="alert"
-                        >
-                            {status.errorMessage}
-                        </div>
-                    )}
 
                     <p className="text-sm leading-6 text-slate-600">
                         {!subscription
@@ -161,7 +172,6 @@ export function ManageUserSubscription({
                             <CalendarPlus className="size-4" />
                         }
                         onClick={() => {
-                            actions.clearError();
                             setIsExtendOpen(true);
                         }}
                     >
@@ -181,10 +191,16 @@ export function ManageUserSubscription({
                                 }
                                 onClick={() => {
                                     void runConfirmedAction({
-                                        title: "Заблокировать подписку?",
-                                        description: "VPN-доступ будет отозван, но оставшийся срок подписки сохранится.",
-                                        confirmText: "Заблокировать",
-                                        action: actions.blockSubscription,
+                                        title:
+                                            "Заблокировать подписку?",
+                                        description:
+                                            "VPN-доступ будет отозван, но оставшийся срок подписки сохранится.",
+                                        confirmText:
+                                            "Заблокировать",
+                                        successMessage:
+                                            "Подписка заблокирована",
+                                        action:
+                                        actions.blockSubscription,
                                     });
                                 }}
                                 variant="outline"
@@ -199,10 +215,16 @@ export function ManageUserSubscription({
                                 }
                                 onClick={() => {
                                     void runConfirmedAction({
-                                        title: "Завершить подписку?",
-                                        description: "Подписка будет завершена немедленно, а VPN-доступ пользователя будет отозван.",
-                                        confirmText: "Завершить подписку",
-                                        action: actions.expireSubscription,
+                                        title:
+                                            "Завершить подписку?",
+                                        description:
+                                            "Подписка будет завершена немедленно, а VPN-доступ пользователя будет отозван.",
+                                        confirmText:
+                                            "Завершить подписку",
+                                        successMessage:
+                                            "Подписка завершена",
+                                        action:
+                                        actions.expireSubscription,
                                     });
                                 }}
                                 variant="danger"
@@ -221,11 +243,18 @@ export function ManageUserSubscription({
                                 }
                                 onClick={() => {
                                     void runConfirmedAction({
-                                        title: "Разблокировать подписку?",
-                                        description: "Если срок подписки ещё действует, VPN-доступ пользователя будет восстановлен.",
-                                        confirmText: "Разблокировать",
-                                        action: actions.unblockSubscription,
-                                        variant: "default",
+                                        title:
+                                            "Разблокировать подписку?",
+                                        description:
+                                            "Если срок подписки ещё действует, VPN-доступ пользователя будет восстановлен.",
+                                        confirmText:
+                                            "Разблокировать",
+                                        successMessage:
+                                            "Подписка разблокирована",
+                                        action:
+                                        actions.unblockSubscription,
+                                        variant:
+                                            "default",
                                     });
                                 }}
                                 variant="secondary"
@@ -244,6 +273,8 @@ export function ManageUserSubscription({
                                         description: "Подписка будет завершена немедленно и её нельзя будет восстановить разблокировкой.",
                                         confirmText: "Завершить подписку",
                                         action: actions.expireSubscription,
+                                        successMessage:
+                                            "Подписка завершена",
                                     });
                                 }}
                                 variant="danger"
@@ -255,20 +286,26 @@ export function ManageUserSubscription({
                 </CardFooter>
             </Card>
 
-            <ExtendSubscriptionModal
-                hasSubscription={Boolean(subscription)}
-                isLoading={
-                    status.activeAction ===
-                    "extend"
-                }
-                isOpen={isExtendOpen}
-                onClose={() => {
-                    if (!status.isLoading) {
-                        setIsExtendOpen(false);
+            {isExtendOpen && (
+                <ExtendSubscriptionModal
+                    hasSubscription={
+                        Boolean(subscription)
                     }
-                }}
-                onSubmit={actions.extendSubscription}
-            />
+                    isLoading={
+                        status.activeAction ===
+                        "extend"
+                    }
+                    isOpen
+                    onClose={() => {
+                        if (!status.isLoading) {
+                            setIsExtendOpen(false);
+                        }
+                    }}
+                    onSubmit={
+                        actions.extendSubscription
+                    }
+                />
+            )}
         </>
     );
 }
