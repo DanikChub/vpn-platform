@@ -2,8 +2,9 @@ import type {
     TrafficReportPayload,
 } from "@vpn/common";
 
-import type {
-    Transaction,
+import {
+    Op,
+    type Transaction,
 } from "sequelize";
 
 import sequelize
@@ -20,6 +21,9 @@ import VpnNodeTraffic
 
 import VpnUserNodeTraffic
     from "./vpn-user-node-traffic.model";
+
+import VpnNodeTrafficPeriod
+    from "./vpn-node-traffic-period.model";
 
 
 interface ApplySnapshotInput {
@@ -216,6 +220,12 @@ class TrafficService {
                 previous,
             );
 
+        await this.applyNodePeriodTraffic(
+            nodeId,
+            delta,
+            transaction,
+        );
+
 
         traffic.uplink_bytes =
             (
@@ -379,31 +389,106 @@ class TrafficService {
     }
 
 
-    /*
-     * Самая важная функция во всей системе.
-     *
-     * Обычный случай:
-     *
-     * previous = 1000
-     * current  = 1500
-     * delta    = 500
-     *
-     *
-     * Повтор того же snapshot:
-     *
-     * previous = 1500
-     * current  = 1500
-     * delta    = 0
-     *
-     *
-     * Xray перезапустился:
-     *
-     * previous = 1500
-     * current  = 200
-     *
-     * Значит новый counter начался с нуля,
-     * поэтому delta = current = 200.
-     */
+    private async applyNodePeriodTraffic(
+        nodeId: number,
+        delta: TrafficCounters,
+        transaction: Transaction,
+    ): Promise<void> {
+
+        const now =
+            new Date();
+
+
+        /*
+         * Ищем расчётный период,
+         * в который попадает текущее время.
+         *
+         * ends_at = NULL означает период
+         * без фиксированной даты окончания.
+         */
+        const period =
+            await VpnNodeTrafficPeriod
+                .findOne({
+                    where: {
+                        node_id:
+                        nodeId,
+
+                        started_at: {
+                            [Op.lte]:
+                            now,
+                        },
+
+                        [Op.or]: [
+                            {
+                                ends_at: {
+                                    [Op.gt]:
+                                    now,
+                                },
+                            },
+
+                            {
+                                ends_at:
+                                    null,
+                            },
+                        ],
+                    },
+
+                    order: [
+                        [
+                            "started_at",
+                            "DESC",
+                        ],
+                    ],
+
+                    transaction,
+
+                    lock:
+                    transaction
+                        .LOCK
+                        .UPDATE,
+                });
+
+
+        /*
+         * Период ещё не настроен.
+         *
+         * Это не ошибка traffic reporter:
+         * lifetime-трафик продолжает
+         * считаться как обычно.
+         */
+        if (!period) {
+            return;
+        }
+
+
+        const deltaBytes =
+            delta.uplinkBytes +
+            delta.downlinkBytes;
+
+
+        if (deltaBytes === 0n) {
+            return;
+        }
+
+
+        period.used_bytes =
+            (
+                BigInt(
+                    period.used_bytes,
+                ) +
+                deltaBytes
+            ).toString();
+
+
+        period.updated_at =
+            now;
+
+
+        await period.save({
+            transaction,
+        });
+    }
+
     private calculateDelta(
         current: TrafficCounters,
         previous: TrafficCounters,

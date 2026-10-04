@@ -17,6 +17,9 @@ import VpnNodeTraffic
 import VpnUserNodeTraffic
     from "../modules/traffic/vpn-user-node-traffic.model";
 
+import VpnNodeTrafficPeriod
+    from "../modules/traffic/vpn-node-traffic-period.model";
+
 export const initAssociations = (): void => {
     User.hasOne(Subscription, {
         foreignKey: "user_id",
@@ -168,6 +171,32 @@ export const initAssociations = (): void => {
 
 
     VpnUserNodeTraffic.belongsTo(
+        VpnNode,
+        {
+            foreignKey:
+                "node_id",
+
+            as:
+                "node",
+        },
+    );
+
+    VpnNode.hasMany(
+        VpnNodeTrafficPeriod,
+        {
+            foreignKey:
+                "node_id",
+
+            as:
+                "trafficPeriods",
+
+            onDelete:
+                "CASCADE",
+        },
+    );
+
+
+    VpnNodeTrafficPeriod.belongsTo(
         VpnNode,
         {
             foreignKey:
