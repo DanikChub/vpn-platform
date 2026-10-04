@@ -8,6 +8,15 @@ import BalanceTransaction from "../modules/balances/balance-transaction.model";
 import PaymentMethod from "../modules/payments/payment-method.model";
 import MarketingSource from "../modules/marketing-sources/marketing-source.model";
 
+import VpnNode
+    from "../modules/vpn-nodes/vpn-node.model";
+
+import VpnNodeTraffic
+    from "../modules/traffic/vpn-node-traffic.model";
+
+import VpnUserNodeTraffic
+    from "../modules/traffic/vpn-user-node-traffic.model";
+
 export const initAssociations = (): void => {
     User.hasOne(Subscription, {
         foreignKey: "user_id",
@@ -87,4 +96,85 @@ export const initAssociations = (): void => {
         foreignKey: "payment_method_id",
         as: "payments",
     });
+
+
+    VpnNode.hasOne(
+        VpnNodeTraffic,
+        {
+            foreignKey:
+                "node_id",
+
+            as:
+                "traffic",
+
+            onDelete:
+                "CASCADE",
+        },
+    );
+
+
+    VpnNodeTraffic.belongsTo(
+        VpnNode,
+        {
+            foreignKey:
+                "node_id",
+
+            as:
+                "node",
+        },
+    );
+
+
+    User.hasMany(
+        VpnUserNodeTraffic,
+        {
+            foreignKey:
+                "user_id",
+
+            as:
+                "nodeTraffic",
+
+            onDelete:
+                "CASCADE",
+        },
+    );
+
+
+    VpnUserNodeTraffic.belongsTo(
+        User,
+        {
+            foreignKey:
+                "user_id",
+
+            as:
+                "user",
+        },
+    );
+
+
+    VpnNode.hasMany(
+        VpnUserNodeTraffic,
+        {
+            foreignKey:
+                "node_id",
+
+            as:
+                "userTraffic",
+
+            onDelete:
+                "CASCADE",
+        },
+    );
+
+
+    VpnUserNodeTraffic.belongsTo(
+        VpnNode,
+        {
+            foreignKey:
+                "node_id",
+
+            as:
+                "node",
+        },
+    );
 };

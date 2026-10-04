@@ -7,6 +7,8 @@ export enum MessageType {
 
     HEARTBEAT_ACK = "heartbeat-ack",
 
+    TRAFFIC_REPORT = "traffic-report",
+
     PING = "ping",
 
     PONG = "pong",

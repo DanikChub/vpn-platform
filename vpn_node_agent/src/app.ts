@@ -49,6 +49,14 @@ import {
     XrayAppliedUsersStore,
 } from "./xray/xray-applied-users.store.js";
 
+import {
+    XrayTrafficService,
+} from "./xray/xray-traffic.service.js";
+
+import {
+    TrafficReporterService,
+} from "./traffic/traffic-reporter.service.js";
+
 export class AgentApp {
     private isStarted = false;
 
@@ -66,6 +74,9 @@ export class AgentApp {
 
     private readonly syncUsersHandler:
         SyncUsersHandler;
+
+    private readonly trafficReporterService:
+        TrafficReporterService;
 
     public constructor() {
         this.connection =
@@ -102,6 +113,18 @@ export class AgentApp {
         const xrayUserService =
             new XrayUserService(
                 xrayApiClient,
+            );
+
+        const xrayTrafficService =
+            new XrayTrafficService(
+                xrayApiClient,
+            );
+
+
+        this.trafficReporterService =
+            new TrafficReporterService(
+                this.connection,
+                xrayTrafficService,
             );
 
         /*
@@ -186,9 +209,12 @@ export class AgentApp {
         );
 
         try {
+
             await this.connection.connect();
 
             this.heartbeatService.start();
+
+            this.trafficReporterService.start();
 
             this.isStarted = true;
 
@@ -226,6 +252,8 @@ export class AgentApp {
 
         try {
             this.heartbeatService.stop();
+
+            this.trafficReporterService.stop();
 
             await this.connection.disconnect();
         } catch (error) {

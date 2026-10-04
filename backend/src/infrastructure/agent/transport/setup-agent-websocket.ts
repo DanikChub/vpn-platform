@@ -3,13 +3,13 @@ import {
     type HelloMessage,
     type HeartbeatMessage,
     type CommandResultMessage,
+    type TrafficReportMessage,
 } from "@vpn/common";
 
 
 import {
     AgentWebSocketServer,
 } from "./agent-websocket.server";
-
 
 import {
     HelloHandler,
@@ -24,6 +24,10 @@ import {
 import {
     CommandResultHandler,
 } from "../handlers/command-result.handler";
+
+import {
+    TrafficReportHandler,
+} from "../handlers/traffic-report.handler";
 
 
 import {
@@ -56,6 +60,12 @@ export function setupAgentWebSocket(
             messageSender,
         });
 
+    const trafficReportHandler =
+        new TrafficReportHandler({
+            nodeRegistry,
+            messageSender,
+        });
+
     const commandResultHandler =
         new CommandResultHandler({
             nodeRegistry,
@@ -73,6 +83,11 @@ export function setupAgentWebSocket(
     router.register<HeartbeatMessage>(
         MessageType.HEARTBEAT,
         heartbeatHandler.handle,
+    );
+
+    router.register<TrafficReportMessage>(
+        MessageType.TRAFFIC_REPORT,
+        trafficReportHandler.handle,
     );
 
     router.register<CommandResultMessage>(

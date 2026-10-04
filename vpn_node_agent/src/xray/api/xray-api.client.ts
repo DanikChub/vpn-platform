@@ -19,10 +19,17 @@ export interface XrayApiUser {
     flow?: "xtls-rprx-vision";
 }
 
+export interface XrayStat {
+    name: string;
+    value: number;
+}
+
 
 export class XrayApiClient {
 
     private readonly handlerService: any;
+
+    private readonly statsService: any;
 
     private proto:
         protobuf.Root | null = null;
@@ -56,10 +63,22 @@ export class XrayApiClient {
                 "command.proto",
             );
 
+        const statsCommandProto =
+            path.join(
+                protoRoot,
+                "app",
+                "stats",
+                "command",
+                "command.proto",
+            );
+
 
         const packageDefinition =
             protoLoader.loadSync(
-                commandProto,
+                [
+                    commandProto,
+                    statsCommandProto,
+                ],
                 {
                     keepCase:
                         true,
@@ -88,6 +107,12 @@ export class XrayApiClient {
 
         this.handlerService =
             new loaded.xray.app.proxyman.command.HandlerService(
+                address,
+                grpc.credentials.createInsecure(),
+            );
+
+        this.statsService =
+            new loaded.xray.app.stats.command.StatsService(
                 address,
                 grpc.credentials.createInsecure(),
             );
@@ -393,6 +418,64 @@ export class XrayApiClient {
 
         return String(
             error,
+        );
+    }
+
+
+
+    async queryStats(
+        pattern: string,
+    ): Promise<XrayStat[]> {
+
+        return new Promise<XrayStat[]>(
+            (
+                resolve,
+                reject,
+            ) => {
+
+                this.statsService.QueryStats(
+                    {
+                        pattern,
+                        reset: false,
+                    },
+
+                    (
+                        error:
+                            grpc.ServiceError | null,
+
+                        response: {
+                            stat?: Array<{
+                                name?: string;
+                                value?: string;
+                            }>;
+                        },
+                    ) => {
+
+                        if (error) {
+                            reject(error);
+                            return;
+                        }
+
+                        const stats =
+                            (response.stat ?? [])
+                                .map(
+                                    stat => ({
+                                        name:
+                                            stat.name ?? "",
+
+                                        value:
+                                            Number(
+                                                stat.value ?? 0,
+                                            ),
+                                    }),
+                                );
+
+                        resolve(
+                            stats,
+                        );
+                    },
+                );
+            },
         );
     }
 }
