@@ -6,4 +6,7 @@ export {
     useUpdateVpnNodeFieldMutation,
     useInstallVpnNodeAgentMutation,
     useDeleteVpnNodeMutation,
+
+    useGetNodeTrafficPeriodQuery,
+    useSetNodeTrafficPeriodMutation,
 } from "./vpn-node.api";

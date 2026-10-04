@@ -76,3 +76,25 @@ export type EditableNodeField =
     | "country_code"
     | "sort_order"
     | "is_active";
+
+
+export interface NodeTrafficPeriod {
+    id: number;
+    nodeId: number;
+
+    startedAt: string;
+    endsAt: string | null;
+
+    limitBytes: string | null;
+    usedBytes: string;
+
+    createdAt: string;
+    updatedAt: string;
+}
+
+
+export interface SetNodeTrafficPeriodDto {
+    startedAt: string;
+    endsAt: string | null;
+    limitBytes: string | null;
+}

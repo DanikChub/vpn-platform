@@ -16,6 +16,9 @@ import {
 } from "@/shared/lib";
 import {useState} from "react";
 
+import NodeTrafficCard
+    from "./NodeTrafficCard";
+
 
 interface NodeDetailsContentProps {
     node: VpnNode;
@@ -226,10 +229,13 @@ const NodeDetailsContent = ({
                     </CardContent>
                 </Card>
 
-
+                <NodeTrafficCard
+                    nodeId={node.id}
+                />
                 
 
             </div>
+
 
         </div>
     );

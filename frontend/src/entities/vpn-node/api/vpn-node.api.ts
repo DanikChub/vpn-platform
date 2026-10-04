@@ -1,4 +1,10 @@
-import type { CreateVpnNodeDto, EditableNodeField, VpnNode } from "../model";
+import type {
+    CreateVpnNodeDto,
+    EditableNodeField,
+    NodeTrafficPeriod,
+    SetNodeTrafficPeriodDto,
+    VpnNode,
+} from "../model";
 import { baseApi } from "@/shared/api";
 
 interface UpdateVpnNodeFieldArgs {
@@ -10,6 +16,11 @@ interface UpdateVpnNodeFieldArgs {
 interface InstallVpnNodeAgentArgs {
     nodeId: number;
     sshPassword: string;
+}
+
+interface SetNodeTrafficPeriodArgs {
+    nodeId: number;
+    data: SetNodeTrafficPeriodDto;
 }
 
 export const vpnNodeApi = baseApi.injectEndpoints({
@@ -55,6 +66,62 @@ export const vpnNodeApi = baseApi.injectEndpoints({
                 { type: "VpnNode", id: "LIST" },
             ],
         }),
+        getNodeTrafficPeriod:
+            builder.query<
+                NodeTrafficPeriod | null,
+                number
+            >({
+                query: (nodeId) => ({
+                    url:
+                        `/admin/nodes/${nodeId}/traffic-period`,
+                }),
+
+                providesTags: (
+                    _result,
+                    _error,
+                    nodeId,
+                ) => [
+                    {
+                        type:
+                            "VpnNode",
+                        id:
+                            `TRAFFIC-${nodeId}`,
+                    },
+                ],
+            }),
+        setNodeTrafficPeriod:
+            builder.mutation<
+                NodeTrafficPeriod,
+                SetNodeTrafficPeriodArgs
+            >({
+                query: ({
+                            nodeId,
+                            data,
+                        }) => ({
+                    url:
+                        `/admin/nodes/${nodeId}/traffic-period`,
+
+                    method:
+                        "POST",
+
+                    data,
+                }),
+
+                invalidatesTags: (
+                    _result,
+                    _error,
+                    {
+                        nodeId,
+                    },
+                ) => [
+                    {
+                        type:
+                            "VpnNode",
+                        id:
+                            `TRAFFIC-${nodeId}`,
+                    },
+                ],
+            }),
     }),
 });
 
@@ -65,4 +132,7 @@ export const {
     useUpdateVpnNodeFieldMutation,
     useInstallVpnNodeAgentMutation,
     useDeleteVpnNodeMutation,
+
+    useGetNodeTrafficPeriodQuery,
+    useSetNodeTrafficPeriodMutation,
 } = vpnNodeApi;
