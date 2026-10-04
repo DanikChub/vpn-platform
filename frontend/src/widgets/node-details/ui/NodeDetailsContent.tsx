@@ -1019,13 +1019,13 @@ function NodeRealitySettings({
 
     return (
         <>
-            <button
-                type="button"
-                className="w-full text-left"
-                onClick={handleOpen}
-            >
-                <Card>
-                    <CardContent>
+            <Card>
+                <CardContent>
+                    <button
+                        type="button"
+                        className="w-full text-left"
+                        onClick={handleOpen}
+                    >
                         <CardTitle>
                             Reality
                         </CardTitle>
@@ -1057,18 +1057,18 @@ function NodeRealitySettings({
                                 }
                                 monospace
                             />
-
-                            <div className="mb-3 text-sm text-slate-500">
-                                Агент: {node.install_status}
-                            </div>
-
-                            <div className="mt-5 border-t border-slate-200 pt-5">
-                                <InstallAgentButton node={node} />
-                            </div>
                         </div>
-                    </CardContent>
-                </Card>
-            </button>
+                    </button>
+
+                    <div className="mt-5 border-t border-slate-200 pt-5">
+                        <div className="mb-3 text-sm text-slate-500">
+                            Агент: {node.install_status}
+                        </div>
+
+                        <InstallAgentButton node={node} />
+                    </div>
+                </CardContent>
+            </Card>
 
             <Modal
                 isOpen={isOpen}

@@ -75,22 +75,27 @@ export class XrayTrafficService {
 
         for (const stat of stats) {
 
-            if (
-                stat.name ===
-                "outbound>>>internet>>>traffic>>>uplink"
-            ) {
-                result.uplinkBytes =
-                    stat.value;
+            const match =
+                /^outbound>>>.+>>>traffic>>>(uplink|downlink)$/
+                    .exec(
+                        stat.name,
+                    );
 
+
+            if (!match) {
                 continue;
             }
 
 
-            if (
-                stat.name ===
-                "outbound>>>internet>>>traffic>>>downlink"
-            ) {
-                result.downlinkBytes =
+            const direction =
+                match[1];
+
+
+            if (direction === "uplink") {
+                result.uplinkBytes +=
+                    stat.value;
+            } else if (direction === "downlink") {
+                result.downlinkBytes +=
                     stat.value;
             }
         }
