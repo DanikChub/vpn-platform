@@ -58,7 +58,6 @@ export interface UpdateMarketingSourceDto {
 
 
 export interface MarketingSourceUser {
-
     id: number;
 
     telegramId: string;
@@ -68,6 +67,12 @@ export interface MarketingSourceUser {
     firstName: string | null;
 
     createdAt: string;
+
+    has_paid: boolean;
+
+    payments_count: number;
+
+    revenue: number;
 }
 
 
@@ -85,4 +90,16 @@ export interface MarketingSourceUsersResponse {
 
 
     users: MarketingSourceUser[];
+}
+
+export interface MarketingSourceStats {
+    users_count: number;
+
+    paid_users_count: number;
+
+    conversion_rate: number;
+
+    payments_count: number;
+
+    revenue: number;
 }

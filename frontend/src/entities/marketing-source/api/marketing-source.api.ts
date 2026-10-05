@@ -1,7 +1,7 @@
 import { baseApi } from "@/shared/api";
 import type {
     CreateMarketingSourceDto,
-    MarketingSource,
+    MarketingSource, MarketingSourceStats,
     MarketingSourceUsersResponse,
     UpdateMarketingSourceDto,
 } from "../model";
@@ -30,6 +30,24 @@ export const marketingSourceApi = baseApi.injectEndpoints({
             query: (id) => ({ url: `/admin/marketing-sources/${id}` }),
             providesTags: (_result, _error, id) => [{ type: "MarketingSource", id }],
         }),
+        getMarketingSourceStats:
+            builder.query<
+                MarketingSourceStats,
+                number
+            >({
+                query: (id) => ({
+                    url:
+                        `/admin/marketing-sources/${id}/stats`,
+                }),
+
+                providesTags:
+                    (_result, _error, id) => [
+                        {
+                            type: "MarketingSource",
+                            id,
+                        },
+                    ],
+            }),
         getMarketingSourceUsers: builder.query<MarketingSourceUsersResponse, number>({
             query: (id) => ({ url: `/admin/marketing-sources/${id}/users` }),
             providesTags: (_result, _error, id) => [{ type: "MarketingSource", id }],
@@ -56,6 +74,7 @@ export const marketingSourceApi = baseApi.injectEndpoints({
 export const {
     useGetMarketingSourcesQuery,
     useGetMarketingSourceQuery,
+    useGetMarketingSourceStatsQuery,
     useGetMarketingSourceUsersQuery,
     useCreateMarketingSourceMutation,
     useUpdateMarketingSourceMutation,

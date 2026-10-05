@@ -542,8 +542,8 @@ class MarketingSourceService {
             });
 
 
-        const paidUserIds =
-            await this.getPaidUserIds(
+        const paymentStats =
+            await this.getUsersPaymentStats(
                 id
             );
 
@@ -556,13 +556,32 @@ class MarketingSourceService {
             },
 
             users:
-                users.map((user) => ({
-                    ...user.toJSON(),
-                    has_paid:
-                        paidUserIds.has(
+                users.map((user) => {
+
+                    const stats =
+                        paymentStats.usersStats.get(
                             user.id
-                        ),
-                })),
+                        );
+
+                    return {
+                        ...user.toJSON(),
+
+                        has_paid:
+                            paymentStats
+                                .paidUserIds
+                                .has(
+                                    user.id
+                                ),
+
+                        payments_count:
+                            stats?.payments_count
+                            ?? 0,
+
+                        revenue:
+                            stats?.revenue
+                            ?? 0,
+                    };
+                }),
         };
     }
 
@@ -673,6 +692,15 @@ class MarketingSourceService {
                 paidUserIds:
                     new Set<number>(),
 
+                usersStats:
+                    new Map<
+                        number,
+                        {
+                            payments_count: number;
+                            revenue: number;
+                        }
+                    >(),
+
                 revenue: 0,
 
                 paymentsCount: 0,
@@ -698,6 +726,15 @@ class MarketingSourceService {
             return {
                 paidUserIds:
                     new Set<number>(),
+
+                usersStats:
+                    new Map<
+                        number,
+                        {
+                            payments_count: number;
+                            revenue: number;
+                        }
+                    >(),
 
                 revenue: 0,
 
@@ -742,6 +779,15 @@ class MarketingSourceService {
 
         let revenue = 0;
 
+        const usersStats =
+            new Map<
+                number,
+                {
+                    payments_count: number;
+                    revenue: number;
+                }
+            >();
+
         for (
             const payment
             of paidPayments
@@ -749,20 +795,47 @@ class MarketingSourceService {
             revenue +=
                 payment.amount;
 
+
             const userId =
                 orderUserMap.get(
                     payment.order_id
                 );
 
-            if (userId !== undefined) {
-                paidUserIds.add(
-                    userId
-                );
+
+            if (userId === undefined) {
+                continue;
             }
+
+
+            paidUserIds.add(
+                userId
+            );
+
+
+            const current =
+                usersStats.get(
+                    userId
+                ) ?? {
+                    payments_count: 0,
+                    revenue: 0,
+                };
+
+
+            current.payments_count += 1;
+
+            current.revenue +=
+                payment.amount;
+
+
+            usersStats.set(
+                userId,
+                current
+            );
         }
 
         return {
             paidUserIds,
+            usersStats,
             revenue,
 
             paymentsCount:

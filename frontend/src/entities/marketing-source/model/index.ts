@@ -8,4 +8,5 @@ export type {
     MarketingSourceUser,
     MarketingSourceUsersResponse,
 
+    MarketingSourceStats
 } from "./marketing-source.types";
