@@ -20,6 +20,7 @@ import vpnCredentialService from "../vpn/vpn-credential.service";
 import {
     PaymentGatewayTemporaryError,
 } from "./payment-gateway.interface";
+import {Op, WhereOptions} from "sequelize";
 
 interface ProcessPaymentWebhookInput {
     code: string;
@@ -29,6 +30,11 @@ interface ProcessPaymentWebhookInput {
     externalPaymentId: string | null;
 }
 
+interface FindPaymentsOptions {
+    where?: WhereOptions;
+    limit: number;
+    offset: number;
+}
 
 class PaymentService {
 
@@ -693,6 +699,59 @@ class PaymentService {
         return this.check(
             input.paymentId
         );
+    }
+
+
+
+    async findAll(
+        options: FindPaymentsOptions
+    ) {
+        return Payment.findAndCountAll({
+            where:
+            options.where,
+
+            order: [
+                [
+                    "created_at",
+                    "DESC",
+                ],
+            ],
+
+            limit:
+            options.limit,
+
+            offset:
+            options.offset,
+        });
+    }
+
+
+    async findPaid(
+        from?: Date
+    ): Promise<Payment[]> {
+
+        const where: WhereOptions = {
+            status:
+                "paid",
+        };
+
+
+        if (from) {
+            Object.assign(
+                where,
+                {
+                    created_at: {
+                        [Op.gte]:
+                        from,
+                    },
+                }
+            );
+        }
+
+
+        return Payment.findAll({
+            where,
+        });
     }
 }
 

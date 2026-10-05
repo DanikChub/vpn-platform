@@ -1,5 +1,6 @@
 import Plan from "../plans/plan.model";
 import Order from "./order.model";
+import {Op} from "sequelize";
 
 class OrderService {
     async create(
@@ -30,6 +31,44 @@ class OrderService {
             currency: plan.currency,
 
             status: "pending",
+        });
+    }
+
+    async findByIds(
+        ids: number[]
+    ): Promise<Order[]> {
+
+        if (!ids.length) {
+            return [];
+        }
+
+
+        return Order.findAll({
+            where: {
+                id: {
+                    [Op.in]: ids,
+                },
+            },
+        });
+    }
+
+
+    async findByUserIds(
+        userIds: number[]
+    ): Promise<Order[]> {
+
+        if (!userIds.length) {
+            return [];
+        }
+
+
+        return Order.findAll({
+            where: {
+                user_id: {
+                    [Op.in]:
+                    userIds,
+                },
+            },
         });
     }
 }

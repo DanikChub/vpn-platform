@@ -3,11 +3,6 @@ import {
     type WhereOptions,
 } from "sequelize";
 
-import Order from "../../orders/order.model";
-import Payment from "../../payments/payment.model";
-import PaymentMethod from "../../payments/payment-method.model";
-import User from "../../users/user.model";
-
 import type {
     AdminPaymentDto,
     AdminPaymentsStatsDto,
