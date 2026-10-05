@@ -47,6 +47,8 @@ class MarketingSourceService {
 
             is_active: source.is_active,
 
+            trial_days: source.trial_days,
+
             telegram_link:
                 this.getTelegramLink(
                     source.code
@@ -197,6 +199,19 @@ class MarketingSourceService {
         );
     }
 
+    private validateTrialDays(
+        trialDays: number
+    ): void {
+        if (
+            !Number.isInteger(trialDays) ||
+            trialDays < 0 ||
+            trialDays > 365
+        ) {
+            throw new Error(
+                "MARKETING_SOURCE_TRIAL_DAYS_INVALID"
+            );
+        }
+    }
 
     async create(
         dto: CreateMarketingSourceDto
@@ -225,14 +240,17 @@ class MarketingSourceService {
             );
         }
 
+        const trialDays = dto.trial_days ?? 0;
+
+        this.validateTrialDays(trialDays);
+
 
         const source =
             await MarketingSource.create({
                 name: dto.name.trim(),
-
                 code,
-
                 type: dto.type,
+                trial_days: trialDays,
             });
 
 
@@ -280,6 +298,11 @@ class MarketingSourceService {
         ) {
             source.is_active =
                 dto.is_active;
+        }
+
+        if (dto.trial_days !== undefined) {
+            this.validateTrialDays(dto.trial_days);
+            source.trial_days = dto.trial_days;
         }
 
 
@@ -623,6 +646,182 @@ class MarketingSourceService {
                         order.user_id
                 )
         );
+    }
+
+    private async getUsersPaymentStats(
+        marketingSourceId: number
+    ) {
+        const users =
+            await User.findAll({
+                where: {
+                    marketing_source_id:
+                    marketingSourceId,
+                },
+
+                attributes: [
+                    "id",
+                ],
+            });
+
+        const userIds =
+            users.map(
+                (user) => user.id
+            );
+
+        if (!userIds.length) {
+            return {
+                paidUserIds:
+                    new Set<number>(),
+
+                revenue: 0,
+
+                paymentsCount: 0,
+            };
+        }
+
+        const orders =
+            await Order.findAll({
+                where: {
+                    user_id: {
+                        [Op.in]:
+                        userIds,
+                    },
+                },
+
+                attributes: [
+                    "id",
+                    "user_id",
+                ],
+            });
+
+        if (!orders.length) {
+            return {
+                paidUserIds:
+                    new Set<number>(),
+
+                revenue: 0,
+
+                paymentsCount: 0,
+            };
+        }
+
+        const orderIds =
+            orders.map(
+                (order) => order.id
+            );
+
+        const paidPayments =
+            await Payment.findAll({
+                where: {
+                    status: "paid",
+
+                    order_id: {
+                        [Op.in]:
+                        orderIds,
+                    },
+                },
+
+                attributes: [
+                    "order_id",
+                    "amount",
+                ],
+            });
+
+        const orderUserMap =
+            new Map(
+                orders.map(
+                    (order) => [
+                        order.id,
+                        order.user_id,
+                    ]
+                )
+            );
+
+        const paidUserIds =
+            new Set<number>();
+
+        let revenue = 0;
+
+        for (
+            const payment
+            of paidPayments
+            ) {
+            revenue +=
+                payment.amount;
+
+            const userId =
+                orderUserMap.get(
+                    payment.order_id
+                );
+
+            if (userId !== undefined) {
+                paidUserIds.add(
+                    userId
+                );
+            }
+        }
+
+        return {
+            paidUserIds,
+            revenue,
+
+            paymentsCount:
+            paidPayments.length,
+        };
+    }
+
+    async getStats(
+        id: number
+    ) {
+        const source =
+            await MarketingSource.findByPk(
+                id
+            );
+
+        if (!source) {
+            return null;
+        }
+
+        const usersCount =
+            await User.count({
+                where: {
+                    marketing_source_id:
+                    id,
+                },
+            });
+
+        const paymentStats =
+            await this.getUsersPaymentStats(
+                id
+            );
+
+        const paidUsersCount =
+            paymentStats.paidUserIds.size;
+
+        return {
+            users_count:
+            usersCount,
+
+            paid_users_count:
+            paidUsersCount,
+
+            conversion_rate:
+                usersCount > 0
+                    ? Math.round(
+                    (
+                        paidUsersCount /
+                        usersCount
+                    ) *
+                    10000
+                ) / 100
+                    : 0,
+
+            payments_count:
+            paymentStats.paymentsCount,
+
+            revenue:
+            paymentStats.revenue,
+        };
     }
 }
 

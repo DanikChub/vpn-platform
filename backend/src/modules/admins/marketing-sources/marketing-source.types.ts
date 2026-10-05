@@ -38,3 +38,18 @@ export interface GetMarketingSourcesQuery {
 
     search?: string;
 }
+
+export interface CreateMarketingSourceDto {
+    name: string;
+    code: string;
+    type: MarketingSourceType;
+    trial_days?: number;
+}
+
+export interface UpdateMarketingSourceDto {
+    name?: string;
+    code?: string;
+    type?: MarketingSourceType;
+    is_active?: boolean;
+    trial_days?: number;
+}

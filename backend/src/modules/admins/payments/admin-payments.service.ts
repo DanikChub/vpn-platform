@@ -3,99 +3,140 @@ import {
     type WhereOptions,
 } from "sequelize";
 
+import paymentService
+    from "../../payments/payment.service";
+
+import paymentMethodService
+    from "../../payments/payment-method.service";
+
+import orderService
+    from "../../orders/order.service";
+
+import userService
+    from "../../users/user.service";
+
+import type Payment
+    from "../../payments/payment.model";
+
 import type {
     AdminPaymentDto,
     AdminPaymentsStatsDto,
     GetAdminPaymentsQuery,
 } from "./admin-payments.types";
 
+
 class AdminPaymentsService {
+
     async getAll(
         query: GetAdminPaymentsQuery
     ) {
+
         const where: WhereOptions = {};
 
+
         if (query.status) {
-            Object.assign(where, {
-                status: query.status,
-            });
+            Object.assign(
+                where,
+                {
+                    status:
+                    query.status,
+                }
+            );
         }
 
-        if (query.from || query.to) {
-            const createdAt: Record<symbol, Date> = {};
+
+        if (
+            query.from ||
+            query.to
+        ) {
+
+            const createdAt: {
+                [Op.gte]?: Date;
+                [Op.lte]?: Date;
+            } = {};
+
 
             if (query.from) {
-                createdAt[Op.gte] = query.from;
+                createdAt[Op.gte] =
+                    query.from;
             }
+
 
             if (query.to) {
-                createdAt[Op.lte] = query.to;
+                createdAt[Op.lte] =
+                    query.to;
             }
 
-            Object.assign(where, {
-                created_at: createdAt,
-            });
+
+            Object.assign(
+                where,
+                {
+                    created_at:
+                    createdAt,
+                }
+            );
         }
 
+
         if (query.search) {
+
             const paymentIds =
                 await this.findPaymentIdsBySearch(
                     query.search
                 );
 
-            Object.assign(where, {
-                id: {
-                    [Op.in]: paymentIds,
-                },
-            });
+
+            Object.assign(
+                where,
+                {
+                    id: {
+                        [Op.in]:
+                        paymentIds,
+                    },
+                }
+            );
         }
 
+
         const offset =
-            (query.page - 1) *
-            query.limit;
+            (
+                query.page - 1
+            ) * query.limit;
+
 
         const {
             rows,
             count,
-        } = await Payment.findAndCountAll({
-            where,
-            include: [
-                {
-                    model: PaymentMethod,
-                    as: "payment_method",
-                    required: false,
-                },
-                {
-                    model: Order,
-                    required: true,
-                    include: [
-                        {
-                            model: User,
-                            required: true,
-                        },
-                    ],
-                },
-            ],
-            order: [
-                [
-                    "created_at",
-                    "DESC",
-                ],
-            ],
-            limit: query.limit,
-            offset,
-            distinct: true,
-        });
+        } =
+            await paymentService.findAll({
+                where,
+
+                limit:
+                query.limit,
+
+                offset,
+            });
+
+
+        const payments =
+            await this.serializeMany(
+                rows
+            );
+
 
         return {
-            payments:
-                rows.map((payment) =>
-                    this.serialize(payment)
-                ),
+            payments,
+
             pagination: {
-                page: query.page,
-                limit: query.limit,
-                total: count,
+                page:
+                query.page,
+
+                limit:
+                query.limit,
+
+                total:
+                count,
+
                 totalPages:
                     Math.ceil(
                         count /
@@ -105,10 +146,14 @@ class AdminPaymentsService {
         };
     }
 
+
     async getStats(): Promise<
         AdminPaymentsStatsDto
     > {
-        const now = new Date();
+
+        const now =
+            new Date();
+
 
         const monthStart =
             new Date(
@@ -117,35 +162,20 @@ class AdminPaymentsService {
                 1
             );
 
+
         const [
             allPaid,
             monthPaid,
-        ] = await Promise.all([
-            Payment.findAll({
-                where: {
-                    status: "paid",
-                },
-                attributes: [
-                    "amount",
-                    "order_id",
-                ],
-            }),
-            Payment.findAll({
-                where: {
-                    status: "paid",
-                    created_at: {
-                        [Op.gte]:
-                            monthStart,
-                    },
-                },
-                attributes: [
-                    "amount",
-                    "order_id",
-                ],
-            }),
-        ]);
+        ] =
+            await Promise.all([
+                paymentService.findPaid(),
+                paymentService.findPaid(
+                    monthStart
+                ),
+            ]);
 
-        const allOrderIds =
+
+        const orderIds =
             [
                 ...new Set(
                     allPaid.map(
@@ -155,31 +185,12 @@ class AdminPaymentsService {
                 ),
             ];
 
-        const monthOrderIds =
-            [
-                ...new Set(
-                    monthPaid.map(
-                        (payment) =>
-                            payment.order_id
-                    )
-                ),
-            ];
 
         const orders =
-            allOrderIds.length
-                ? await Order.findAll({
-                    where: {
-                        id: {
-                            [Op.in]:
-                                allOrderIds,
-                        },
-                    },
-                    attributes: [
-                        "id",
-                        "user_id",
-                    ],
-                })
-                : [];
+            await orderService.findByIds(
+                orderIds
+            );
+
 
         const orderUserMap =
             new Map(
@@ -191,19 +202,27 @@ class AdminPaymentsService {
                 )
             );
 
+
         const totalRevenue =
             allPaid.reduce(
-                (sum, payment) =>
+                (
+                    sum,
+                    payment
+                ) =>
                     sum +
                     Number(
                         payment.amount
                     ),
                 0
             );
+
 
         const currentMonthRevenue =
             monthPaid.reduce(
-                (sum, payment) =>
+                (
+                    sum,
+                    payment
+                ) =>
                     sum +
                     Number(
                         payment.amount
@@ -211,45 +230,29 @@ class AdminPaymentsService {
                 0
             );
 
+
         const uniquePayingUsers =
-            new Set(
-                allPaid
-                    .map((payment) =>
-                        orderUserMap.get(
-                            payment.order_id
-                        )
-                    )
-                    .filter(
-                        (
-                            userId
-                        ): userId is number =>
-                            userId !==
-                            undefined
-                    )
-            ).size;
+            this.countUniqueUsers(
+                allPaid,
+                orderUserMap
+            );
+
 
         const currentMonthUniquePayingUsers =
-            new Set(
-                monthOrderIds
-                    .map((orderId) =>
-                        orderUserMap.get(
-                            orderId
-                        )
-                    )
-                    .filter(
-                        (
-                            userId
-                        ): userId is number =>
-                            userId !==
-                            undefined
-                    )
-            ).size;
+            this.countUniqueUsers(
+                monthPaid,
+                orderUserMap
+            );
+
 
         return {
             totalRevenue,
+
             totalPaidPayments:
-                allPaid.length,
+            allPaid.length,
+
             uniquePayingUsers,
+
             averageCheck:
                 allPaid.length
                     ? Math.round(
@@ -257,202 +260,357 @@ class AdminPaymentsService {
                         allPaid.length
                     )
                     : 0,
+
             currentMonthRevenue,
+
             currentMonthPaidPayments:
-                monthPaid.length,
+            monthPaid.length,
+
             currentMonthUniquePayingUsers,
         };
     }
 
+
     private async findPaymentIdsBySearch(
         search: string
     ): Promise<number[]> {
-        const numericSearch =
-            /^\d+$/.test(search)
-                ? Number(search)
-                : null;
 
         const users =
-            await User.findAll({
-                where: {
-                    [Op.or]: [
-                        {
-                            username: {
-                                [Op.iLike]:
-                                    `%${search}%`,
-                            },
-                        },
-                        {
-                            firstName: {
-                                [Op.iLike]:
-                                    `%${search}%`,
-                            },
-                        },
-                        ...(numericSearch !== null
-                            ? [
-                                {
-                                    id:
-                                        numericSearch,
-                                },
-                                {
-                                    telegramId:
-                                        search,
-                                },
-                            ]
-                            : []),
-                    ],
-                },
-                attributes: [
-                    "id",
-                ],
-            });
+            await userService.findBySearch(
+                search
+            );
+
 
         const userIds =
             users.map(
-                (user) => user.id
+                (user) =>
+                    user.id
             );
+
 
         const orders =
-            userIds.length
-                ? await Order.findAll({
-                    where: {
-                        user_id: {
-                            [Op.in]:
-                                userIds,
-                        },
-                    },
-                    attributes: [
-                        "id",
-                    ],
-                })
-                : [];
-
-        const orderIds =
-            orders.map(
-                (order) => order.id
+            await orderService.findByUserIds(
+                userIds
             );
 
-        const payments =
-            await Payment.findAll({
-                where: {
-                    [Op.or]: [
-                        ...(numericSearch !== null
-                            ? [
-                                {
-                                    id:
-                                        numericSearch,
-                                },
-                            ]
-                            : []),
-                        {
-                            provider_payment_id: {
-                                [Op.iLike]:
-                                    `%${search}%`,
-                            },
-                        },
-                        ...(orderIds.length
-                            ? [
-                                {
-                                    order_id: {
-                                        [Op.in]:
-                                            orderIds,
-                                    },
-                                },
-                            ]
-                            : []),
-                    ],
+
+        const orderIds =
+            new Set(
+                orders.map(
+                    (order) =>
+                        order.id
+                )
+            );
+
+
+        /*
+         * PaymentService пока умеет
+         * фильтровать через WhereOptions.
+         *
+         * Это всё ещё нормально:
+         * Sequelize остаётся внутри
+         * payment-модуля.
+         */
+        const conditions: WhereOptions[] = [
+            {
+                provider_payment_id: {
+                    [Op.iLike]:
+                        `%${search}%`,
                 },
-                attributes: [
-                    "id",
-                ],
+            },
+        ];
+
+
+        if (orderIds.size) {
+            conditions.push({
+                order_id: {
+                    [Op.in]:
+                        [...orderIds],
+                },
+            });
+        }
+
+
+        if (/^\d+$/.test(search)) {
+            conditions.push({
+                id:
+                    Number(search),
+            });
+        }
+
+
+        const result =
+            await paymentService.findAll({
+                where: {
+                    [Op.or]:
+                    conditions,
+                },
+
+                /*
+                 * Для MVP этого более
+                 * чем достаточно.
+                 *
+                 * Позже можно вынести
+                 * отдельный findIds().
+                 */
+                limit:
+                    1000,
+
+                offset:
+                    0,
             });
 
-        return payments.map(
-            (payment) => payment.id
+
+        return result.rows.map(
+            (payment) =>
+                payment.id
         );
     }
 
-    private serialize(
-        payment: Payment
-    ): AdminPaymentDto {
-        const paymentWithRelations =
-            payment as Payment & {
-                payment_method?:
-                    PaymentMethod | null;
-                Order?: Order & {
-                    User?: User;
-                };
-            };
 
-        const order =
-            paymentWithRelations.Order;
+    private async serializeMany(
+        payments: Payment[]
+    ): Promise<AdminPaymentDto[]> {
 
-        const user =
-            order?.User;
-
-        if (!order || !user) {
-            throw new Error(
-                "Payment relations are missing"
-            );
+        if (!payments.length) {
+            return [];
         }
 
-        const paymentMethod =
-            paymentWithRelations
-                .payment_method;
 
-        return {
-            id: payment.id,
-            providerPaymentId:
-                payment.provider_payment_id,
-            amount:
-                Number(payment.amount),
-            currency:
-                payment.currency,
-            status:
-                payment.status,
-            paymentUrl:
-                payment.payment_url,
-            expiresAt:
-                payment.expires_at,
-            createdAt:
-                payment.created_at,
-            updatedAt:
-                payment.updated_at,
-            paymentMethod:
-                paymentMethod
-                    ? {
+        const orderIds =
+            [
+                ...new Set(
+                    payments.map(
+                        (payment) =>
+                            payment.order_id
+                    )
+                ),
+            ];
+
+
+        const paymentMethodIds =
+            [
+                ...new Set(
+                    payments.map(
+                        (payment) =>
+                            payment.payment_method_id
+                    )
+                ),
+            ];
+
+
+        const [
+            orders,
+            paymentMethods,
+        ] =
+            await Promise.all([
+                orderService.findByIds(
+                    orderIds
+                ),
+
+                paymentMethodService.findByIds(
+                    paymentMethodIds
+                ),
+            ]);
+
+
+        const userIds =
+            [
+                ...new Set(
+                    orders.map(
+                        (order) =>
+                            order.user_id
+                    )
+                ),
+            ];
+
+
+        const users =
+            await userService.findByIds(
+                userIds
+            );
+
+
+        const orderMap =
+            new Map(
+                orders.map(
+                    (order) => [
+                        order.id,
+                        order,
+                    ]
+                )
+            );
+
+
+        const userMap =
+            new Map(
+                users.map(
+                    (user) => [
+                        user.id,
+                        user,
+                    ]
+                )
+            );
+
+
+        const paymentMethodMap =
+            new Map(
+                paymentMethods.map(
+                    (method) => [
+                        method.id,
+                        method,
+                    ]
+                )
+            );
+
+
+        return payments.map(
+            (payment) => {
+
+                const order =
+                    orderMap.get(
+                        payment.order_id
+                    );
+
+
+                if (!order) {
+                    throw new Error(
+                        `Order ${payment.order_id} not found for payment ${payment.id}`
+                    );
+                }
+
+
+                const user =
+                    userMap.get(
+                        order.user_id
+                    );
+
+
+                if (!user) {
+                    throw new Error(
+                        `User ${order.user_id} not found for payment ${payment.id}`
+                    );
+                }
+
+
+                const paymentMethod =
+                    paymentMethodMap.get(
+                        payment.payment_method_id
+                    );
+
+
+                return {
+                    id:
+                    payment.id,
+
+                    providerPaymentId:
+                    payment.provider_payment_id,
+
+                    amount:
+                        Number(
+                            payment.amount
+                        ),
+
+                    currency:
+                    payment.currency,
+
+                    status:
+                    payment.status,
+
+                    paymentUrl:
+                    payment.payment_url,
+
+                    expiresAt:
+                    payment.expires_at,
+
+                    createdAt:
+                    payment.created_at,
+
+                    updatedAt:
+                    payment.updated_at,
+
+
+                    paymentMethod:
+                        paymentMethod
+                            ? {
+                                id:
+                                paymentMethod.id,
+
+                                code:
+                                paymentMethod.code,
+
+                                name:
+                                paymentMethod.name,
+                            }
+                            : null,
+
+
+                    order: {
                         id:
-                            paymentMethod.id,
-                        code:
-                            paymentMethod.code,
-                        name:
-                            paymentMethod.name,
-                    }
-                    : null,
-            order: {
-                id: order.id,
-                planId:
-                    order.plan_id,
-                planName:
-                    order.plan_name,
-                durationDays:
-                    order.duration_days,
-                status:
-                    order.status,
-            },
-            user: {
-                id: user.id,
-                telegramId:
-                    user.telegramId,
-                username:
-                    user.username,
-                firstName:
-                    user.firstName,
-                marketingSourceId:
-                    user.marketing_source_id,
-            },
-        };
+                        order.id,
+
+                        planId:
+                        order.plan_id,
+
+                        planName:
+                        order.plan_name,
+
+                        durationDays:
+                        order.duration_days,
+
+                        status:
+                        order.status,
+                    },
+
+
+                    user: {
+                        id:
+                        user.id,
+
+                        telegramId:
+                        user.telegramId,
+
+                        username:
+                        user.username,
+
+                        firstName:
+                        user.firstName,
+
+                        marketingSourceId:
+                        user.marketing_source_id,
+                    },
+                };
+            }
+        );
+    }
+
+
+    private countUniqueUsers(
+        payments: Payment[],
+        orderUserMap: Map<
+            number,
+            number
+        >
+    ): number {
+
+        return new Set(
+            payments
+                .map(
+                    (payment) =>
+                        orderUserMap.get(
+                            payment.order_id
+                        )
+                )
+                .filter(
+                    (
+                        userId
+                    ): userId is number =>
+                        userId !==
+                        undefined
+                )
+        ).size;
     }
 }
+
 
 export default new AdminPaymentsService();

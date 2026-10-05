@@ -12,6 +12,21 @@ class PaymentMethodService {
             ],
         });
     }
+
+    async findByIds(
+        ids: number[]
+    ): Promise<PaymentMethod[]> {
+
+        if (!ids.length) {
+            return [];
+        }
+
+        return PaymentMethod.findAll({
+            where: {
+                id: ids,
+            },
+        });
+    }
 }
 
 export default new PaymentMethodService();

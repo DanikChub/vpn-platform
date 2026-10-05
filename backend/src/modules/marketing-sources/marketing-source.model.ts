@@ -50,6 +50,7 @@ class MarketingSource extends Model<
 
     declare is_active: CreationOptional<boolean>;
 
+    declare trial_days: CreationOptional<number>;
 
     declare created_at: CreationOptional<Date>;
     declare updated_at: CreationOptional<Date>;
@@ -95,6 +96,12 @@ MarketingSource.init(
             type: DataTypes.BOOLEAN,
             allowNull: false,
             defaultValue: true,
+        },
+
+        trial_days: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
         },
 
 

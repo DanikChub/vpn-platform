@@ -1,5 +1,7 @@
 import {
-    CreditCard, Link,
+    Banknote,
+    CreditCard,
+    Link,
     type LucideIcon,
 } from "lucide-react";
 
@@ -29,6 +31,11 @@ export const sidebarLinks: SidebarLink[] = [
         label: "Пользователи",
         path: routePaths.users,
         icon: Users,
+    },
+    {
+        label: "Платежи",
+        path: routePaths.payments,
+        icon: Banknote,
     },
     {
         label: "Источники",

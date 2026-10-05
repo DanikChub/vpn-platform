@@ -144,6 +144,7 @@ class MarketingSourceController {
                 name,
                 code,
                 type,
+                trial_days,
             } = req.body;
 
 
@@ -175,12 +176,12 @@ class MarketingSourceController {
 
 
             const source =
-                await marketingSourceService
-                    .create({
-                        name,
-                        code,
-                        type,
-                    });
+                await marketingSourceService.create({
+                    name,
+                    code,
+                    type,
+                    trial_days,
+                });
 
 
             res
@@ -225,6 +226,7 @@ class MarketingSourceController {
                 code,
                 type,
                 is_active,
+                trial_days,
             } = req.body;
 
 
@@ -257,16 +259,16 @@ class MarketingSourceController {
 
 
             const source =
-                await marketingSourceService
-                    .update(
-                        id,
-                        {
-                            name,
-                            code,
-                            type,
-                            is_active,
-                        }
-                    );
+                await marketingSourceService.update(
+                    Number(req.params.id),
+                    {
+                        name,
+                        code,
+                        type,
+                        is_active,
+                        trial_days,
+                    }
+                );
 
 
             if (!source) {
@@ -431,6 +433,15 @@ class MarketingSourceController {
                         });
 
                     return;
+
+                case "MARKETING_SOURCE_TRIAL_DAYS_INVALID":
+                    res
+                        .status(400)
+                        .json({
+                            message:
+                                "Количество тестовых дней должно быть целым числом от 0 до 365",
+                        });
+                    return;
             }
         }
 
@@ -479,6 +490,60 @@ class MarketingSourceController {
             res.status(500).json({
                 message:
                     "Failed to get source users",
+            });
+        }
+    }
+
+    async getStats(
+        req: Request,
+        res: Response
+    ): Promise<void> {
+
+        try {
+
+            const id =
+                Number(req.params.id);
+
+
+            if (
+                !Number.isInteger(id)
+            ) {
+                res.status(400).json({
+                    message:
+                        "Invalid source id",
+                });
+
+                return;
+            }
+
+
+            const stats =
+                await marketingSourceService
+                    .getStats(id);
+
+
+            if (!stats) {
+
+                res.status(404).json({
+                    message:
+                        "Marketing source not found",
+                });
+
+                return;
+            }
+
+
+            res.json(stats);
+
+
+        } catch (error) {
+
+            console.error(error);
+
+
+            res.status(500).json({
+                message:
+                    "Failed to get source stats",
             });
         }
     }

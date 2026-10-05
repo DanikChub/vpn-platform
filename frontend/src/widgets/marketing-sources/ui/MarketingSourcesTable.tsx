@@ -74,6 +74,10 @@ const MarketingSourcesTable = ({
                             Код
                         </TableHead>
 
+                        <TableHead>
+                            Тестовый период
+                        </TableHead>
+
 
                         <TableHead>
                             Пользователи
@@ -138,7 +142,11 @@ const MarketingSourcesTable = ({
 
                                     </TableCell>
 
-
+                                    <TableCell>
+                                        {source.trial_days > 0
+                                            ? `${source.trial_days} дн.`
+                                            : "Нет"}
+                                    </TableCell>
 
                                     <TableCell>
 

@@ -1,7 +1,10 @@
 import User from "./user.model";
-import balanceService from "../balances/balance.service";
 import MarketingSource from "../marketing-sources/marketing-source.model";
 import subscriptionService from "../subscriptions/subscription.service";
+
+import {
+    Op,
+} from "sequelize";
 
 
 interface FindOrCrateTelegramUserPayload {
@@ -15,96 +18,142 @@ class UserService {
     async findOrCreateTelegramUser(
         payload: FindOrCrateTelegramUserPayload,
     ) {
-
-
-        let marketingSourceId:
-            number | null = null;
+        let marketingSource:
+            MarketingSource | null = null;
 
         const organicSource =
             await MarketingSource.findOne({
-                where:{
-                    code:"organic",
+                where: {
+                    code: "organic",
                 },
             });
 
-
-        marketingSourceId =
-            organicSource?.id ?? null;
-
+        marketingSource = organicSource;
 
         if (
             payload.startPayload &&
             payload.startPayload.startsWith("m_")
         ) {
-
             const code =
                 payload.startPayload.replace(
                     "m_",
                     ""
                 );
 
-
             const source =
                 await MarketingSource.findOne({
-                    where:{
+                    where: {
                         code,
-                        is_active:true,
+                        is_active: true,
                     },
                 });
 
-
-            if(source){
-                marketingSourceId =
-                    source.id;
+            if (source) {
+                marketingSource = source;
             }
         }
 
-
         const [user, created] =
             await User.findOrCreate({
-
-                where:{
+                where: {
                     telegramId:
                     payload.telegramId,
                 },
-
-
-                defaults:{
-
+                defaults: {
                     telegramId:
                     payload.telegramId,
-
                     username:
                     payload.username,
-
                     firstName:
                     payload.firstName,
-
-
                     marketing_source_id:
-                    marketingSourceId,
+                        marketingSource?.id ?? null,
                 }
             });
 
-        if(
+        if (
             !created &&
             !user.marketing_source_id &&
-            marketingSourceId
-        ){
+            marketingSource
+        ) {
             user.marketing_source_id =
-                marketingSourceId;
+                marketingSource.id;
 
             await user.save();
         }
 
-        if (created) {
+        if (
+            created &&
+            marketingSource &&
+            marketingSource.trial_days > 0
+        ) {
             await subscriptionService.extend(
                 user.id,
-                30
+                marketingSource.trial_days
             );
         }
 
         return user;
+    }
+
+    async findByIds(
+        ids: number[]
+    ): Promise<User[]> {
+
+        if (!ids.length) {
+            return [];
+        }
+
+        return User.findAll({
+            where: {
+                id: {
+                    [Op.in]: ids,
+                },
+            },
+        });
+    }
+
+
+    async findBySearch(
+        search: string
+    ): Promise<User[]> {
+
+        const conditions = [
+            {
+                username: {
+                    [Op.iLike]:
+                        `%${search}%`,
+                },
+            },
+            {
+                firstName: {
+                    [Op.iLike]:
+                        `%${search}%`,
+                },
+            },
+        ];
+
+
+        if (/^\d+$/.test(search)) {
+            conditions.push(
+                {
+                    id:
+                        Number(search),
+                } as any,
+                {
+                    telegramId:
+                    search,
+                } as any
+            );
+        }
+
+
+        return User.findAll({
+            where: {
+                [Op.or]:
+                conditions,
+            },
+        });
     }
 }
 

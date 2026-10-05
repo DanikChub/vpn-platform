@@ -15,6 +15,7 @@ import PlansPage from "@/pages/plans";
 import NodeDetailsPage from "@/pages/node-details";
 import MarketingSourcesPage from "@/pages/marketing-sources";
 import MarketingSourceDetailsPage from "@/pages/marketing-source-details";
+import PaymentsPage from "@/pages/payments";
 
 
 export interface AppRoute {
@@ -66,6 +67,10 @@ export const protectedRoutes: AppRoute[] = [
     {
         path: routePaths.marketingSourceDetails,
         element: <MarketingSourceDetailsPage/>
+    },
+    {
+        path: routePaths.payments,
+        element: <PaymentsPage />,
     },
 
 ];

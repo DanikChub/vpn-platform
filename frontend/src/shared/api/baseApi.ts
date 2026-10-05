@@ -95,6 +95,7 @@ export const baseApi =
             "User",
             "Plan",
             "MarketingSource",
+            "Payment"
         ],
         endpoints: () => ({}),
     });

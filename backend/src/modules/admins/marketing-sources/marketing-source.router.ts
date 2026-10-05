@@ -103,5 +103,17 @@ adminMarketingSourseRouter.get(
         )
 );
 
+adminMarketingSourseRouter.get(
+    "/:id/stats",
+    requirePermission(
+        "marketing_sources.read"
+    ),
+    marketingSourceController
+        .getStats
+        .bind(
+            marketingSourceController
+        )
+);
+
 
 export default adminMarketingSourseRouter;

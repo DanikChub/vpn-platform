@@ -18,6 +18,7 @@ export interface MarketingSource {
 
     is_active: boolean;
 
+    trial_days: number;
 
     telegram_link: string;
 
@@ -36,6 +37,8 @@ export interface CreateMarketingSourceDto {
 
     code: string;
 
+    trial_days: number;
+
     type: MarketingSourceType;
 }
 
@@ -45,6 +48,8 @@ export interface UpdateMarketingSourceDto {
     name?: string;
 
     code?: string;
+
+    trial_days?: number;
 
     type?: MarketingSourceType;
 

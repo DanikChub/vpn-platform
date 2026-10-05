@@ -11,6 +11,7 @@ const types: { value: MarketingSourceType; label: string }[] = [
 ];
 
 const CreateMarketingSourceDialog = () => {
+    const [trialDays, setTrialDays] = useState(0);
     const [open, setOpen] = useState(false);
     const [name, setName] = useState("");
     const [code, setCode] = useState("");
@@ -21,12 +22,18 @@ const CreateMarketingSourceDialog = () => {
         setName("");
         setCode("");
         setType("telegram");
+        setTrialDays(0);
         resetMutation();
     };
 
     const create = async () => {
         try {
-            await createSource({ name, code, type }).unwrap();
+            await createSource({
+                name,
+                code,
+                type,
+                trial_days: trialDays,
+            }).unwrap();
             setOpen(false);
             reset();
         } catch {
@@ -54,8 +61,34 @@ const CreateMarketingSourceDialog = () => {
                             {types.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
                         </select>
                     </div>
+                    <Input
+                        label="Тестовый период, дней"
+                        type="number"
+                        min={0}
+                        max={365}
+                        value={trialDays}
+                        onChange={(event) => {
+                            const value = Number(event.target.value);
+
+                            setTrialDays(
+                                Number.isNaN(value)
+                                    ? 0
+                                    : value
+                            );
+                        }}
+                    />
                     {isError && <div className="text-sm text-red-600">Не удалось создать источник</div>}
-                    <Button disabled={isLoading || !name || !code} onClick={() => void create()}>
+                    <Button
+                        disabled={
+                            isLoading ||
+                            !name ||
+                            !code ||
+                            !Number.isInteger(trialDays) ||
+                            trialDays < 0 ||
+                            trialDays > 365
+                        }
+                        onClick={create}
+                    >
                         {isLoading ? "Создание..." : "Создать"}
                     </Button>
                 </div>
