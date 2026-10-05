@@ -55,8 +55,22 @@ class AdminNodesService {
                 ],
             });
 
-        return nodes.map(
-            mapNodeToAdminResponse,
+
+        return Promise.all(
+            nodes.map(
+                async (node) => {
+                    const trafficPeriod =
+                        await this.getCurrentTrafficPeriod(
+                            node.id,
+                        );
+
+
+                    return mapNodeToAdminResponse(
+                        node,
+                        trafficPeriod,
+                    );
+                },
+            ),
         );
     }
 

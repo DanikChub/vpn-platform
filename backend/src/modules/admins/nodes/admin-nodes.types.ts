@@ -34,11 +34,16 @@ export interface AdminNodeResponse {
 
 
     uptime_seconds: number | null;
+
+    trafficPeriod:
+        NodeTrafficPeriodResponse | null;
 }
 
 
 export function mapNodeToAdminResponse(
     node: VpnNode,
+    trafficPeriod:
+        NodeTrafficPeriodResponse | null = null,
 ): AdminNodeResponse {
 
     return {
@@ -63,6 +68,8 @@ export function mapNodeToAdminResponse(
         memory_used: node.memory_used,
 
         uptime_seconds: node.uptime_seconds,
+
+        trafficPeriod,
     };
 }
 

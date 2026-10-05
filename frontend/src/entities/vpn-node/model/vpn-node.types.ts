@@ -44,6 +44,9 @@ export interface VpnNode {
     country_code: string | null;
 
     sort_order: number;
+
+    trafficPeriod:
+        NodeTrafficPeriod | null;
 }
 
 export interface CreateVpnNodeDto {

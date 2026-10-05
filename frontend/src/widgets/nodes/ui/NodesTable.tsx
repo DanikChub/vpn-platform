@@ -69,6 +69,10 @@ const NodesTable = ({
                             Uptime
                         </TableHead>
 
+                        <TableHead>
+                            Трафик
+                        </TableHead>
+
                         <TableHead className="w-16 text-center">
                             Действия
                         </TableHead>
@@ -151,6 +155,12 @@ const NodesTable = ({
 
                             </TableCell>
 
+                            <TableCell>
+                                {formatTrafficPeriod(
+                                    node.trafficPeriod,
+                                )}
+                            </TableCell>
+
 
                             <TableCell className="text-right">
                                 <div className="flex space-x-2">
@@ -189,6 +199,44 @@ const NodesTable = ({
         </TableContainer>
     );
 };
+
+function formatTrafficPeriod(
+    period:
+    VpnNode["trafficPeriod"],
+): string {
+
+    if (!period) {
+        return "-";
+    }
+
+
+    const usedGb =
+        Number(period.usedBytes) /
+        1024 ** 3;
+
+
+    if (!period.limitBytes) {
+        return `${usedGb.toFixed(2)} GB`;
+    }
+
+
+    const limitGb =
+        Number(period.limitBytes) /
+        1024 ** 3;
+
+
+    const percent =
+        limitGb > 0
+            ? usedGb / limitGb * 100
+            : 0;
+
+
+    return (
+        `${usedGb.toFixed(2)} / ` +
+        `${limitGb.toFixed(0)} GB ` +
+        `(${percent.toFixed(1)}%)`
+    );
+}
 
 
 export default NodesTable;
