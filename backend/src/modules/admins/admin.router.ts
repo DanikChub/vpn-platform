@@ -6,6 +6,7 @@ import adminUsersRouter from "./users/admin-users.router";
 import adminNodesRouter from "./nodes/admin-nodes.router";
 import adminPlansRouter from "./plans/admin-plans.router";
 import adminMarketingSourseRouter from "./marketing-sources/marketing-source.router";
+import adminPaymentsRouter from "./payments/admin-payments.router";
 
 const adminRouter = Router();
 
@@ -36,6 +37,11 @@ adminRouter.use(
 adminRouter.use(
     "/marketing-sources",
     adminMarketingSourseRouter
+);
+
+adminRouter.use(
+    "/payments",
+    adminPaymentsRouter
 );
 
 export default adminRouter;
