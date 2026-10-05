@@ -45,6 +45,8 @@ export interface UserListItem {
 
     balanceAmount: number;
 
+    trafficBytes: string;
+
     subscription:
         UserSubscription | null;
 

@@ -19,7 +19,8 @@ type UserWithSubscription =
 
 
 export function mapAdminUserListItem(
-    user: User
+    user: User,
+    trafficBytes = "0",
 ): AdminUserListItem {
     const populatedUser =
         user as UserWithSubscription;
@@ -45,6 +46,8 @@ export function mapAdminUserListItem(
             Number(
                 user.balance_amount
             ),
+
+        trafficBytes,
 
         subscription:
             subscription

@@ -56,6 +56,10 @@ export function UsersTable({
                         </TableHead>
 
                         <TableHead>
+                            Трафик
+                        </TableHead>
+
+                        <TableHead>
                             Подписка
                         </TableHead>
 
@@ -107,6 +111,12 @@ export function UsersTable({
                             <TableCell>
                                 {formatMoney(
                                     user.balanceAmount
+                                )}
+                            </TableCell>
+
+                            <TableCell>
+                                {formatTraffic(
+                                    user.trafficBytes
                                 )}
                             </TableCell>
 
@@ -210,4 +220,32 @@ function SortableHead({
             </button>
         </TableHead>
     );
+}
+
+function formatTraffic(
+    bytes: string,
+): string {
+    const value =
+        Number(bytes);
+
+
+    if (value < 1024 ** 2) {
+        return `${(
+            value / 1024
+        ).toFixed(1)} KB`;
+    }
+
+
+    if (value < 1024 ** 3) {
+        return `${(
+            value /
+            1024 ** 2
+        ).toFixed(1)} MB`;
+    }
+
+
+    return `${(
+        value /
+        1024 ** 3
+    ).toFixed(2)} GB`;
 }

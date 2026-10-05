@@ -56,6 +56,8 @@ export interface AdminUserListItem {
 
     balanceAmount: number;
 
+    trafficBytes: string;
+
     subscription:
         AdminUserSubscriptionData | null;
 

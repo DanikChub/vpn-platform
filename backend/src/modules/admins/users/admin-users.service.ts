@@ -29,6 +29,9 @@ import {
     vpnAccessService,
 } from "../../../infrastructure/container";
 
+import VpnUserNodeTraffic
+    from "../../traffic/vpn-user-node-traffic.model";
+
 import type {
     AdminUserDetails,
     GetAdminUsersInput,
@@ -92,6 +95,42 @@ class AdminUsersService {
                     false,
             });
 
+        const userIds =
+            result.rows.map(
+                (user) => user.id
+            );
+
+
+        const trafficRows =
+            userIds.length > 0
+                ? await VpnUserNodeTraffic.findAll({
+                    where: {
+                        user_id: {
+                            [Op.in]: userIds,
+                        },
+                    },
+                })
+                : [];
+
+
+        const trafficByUser =
+            new Map<number, bigint>();
+
+
+        for (const traffic of trafficRows) {
+            const current =
+                trafficByUser.get(
+                    traffic.user_id
+                ) ?? 0n;
+
+            trafficByUser.set(
+                traffic.user_id,
+                current +
+                BigInt(traffic.uplink_bytes) +
+                BigInt(traffic.downlink_bytes),
+            );
+        }
+
         const totalItems =
             result.count;
 
@@ -103,7 +142,15 @@ class AdminUsersService {
         return {
             users:
                 result.rows.map(
-                    mapAdminUserListItem
+                    (user) =>
+                        mapAdminUserListItem(
+                            user,
+                            (
+                                trafficByUser.get(
+                                    user.id
+                                ) ?? 0n
+                            ).toString(),
+                        )
                 ),
 
             pagination: {
