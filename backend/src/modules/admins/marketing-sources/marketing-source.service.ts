@@ -331,9 +331,15 @@ class MarketingSourceService {
             });
 
 
+        const paidUsersCount =
+            await this.getPaidUserIds(
+                source.id
+            );
+
         return this.serialize(
             source,
-            usersCount
+            usersCount,
+            paidUsersCount.size
         );
     }
 
@@ -367,9 +373,15 @@ class MarketingSourceService {
             });
 
 
+        const paidUsersCount =
+            await this.getPaidUserIds(
+                source.id
+            );
+
         return this.serialize(
             source,
-            usersCount
+            usersCount,
+            paidUsersCount.size
         );
     }
 
@@ -403,9 +415,15 @@ class MarketingSourceService {
             });
 
 
+        const paidUsersCount =
+            await this.getPaidUserIds(
+                source.id
+            );
+
         return this.serialize(
             source,
-            usersCount
+            usersCount,
+            paidUsersCount.size
         );
     }
 
