@@ -156,9 +156,26 @@ const NodesTable = ({
                             </TableCell>
 
                             <TableCell>
-                                {formatTrafficPeriod(
-                                    node.trafficPeriod,
-                                )}
+                                <NodeTrafficProgress
+                                    period={{
+                                        id: 3,
+                                        nodeId: 3,
+
+                                        startedAt: "2026-10-01T00:00:00.000Z",
+                                        endsAt: "2026-11-01T00:00:00.000Z",
+
+                                        limitBytes: String(
+                                            500 * 1024 ** 3
+                                        ),
+
+                                        usedBytes: String(
+                                            475 * 1024 ** 3
+                                        ),
+
+                                        createdAt: "2026-10-01T00:00:00.000Z",
+                                        updatedAt: "2026-10-05T00:00:00.000Z",
+                                    }}
+                                />
                             </TableCell>
 
 
@@ -200,42 +217,132 @@ const NodesTable = ({
     );
 };
 
-function formatTrafficPeriod(
-    period:
-    VpnNode["trafficPeriod"],
-): string {
+// id: number;
+// nodeId: number;
+//
+// startedAt: string;
+// endsAt: string | null;
+//
+// limitBytes: string | null;
+// usedBytes: string;
+//
+// createdAt: string;
+// updatedAt: string;
 
+function NodeTrafficProgress({
+                                 period,
+                             }: {
+    period: VpnNode["trafficPeriod"];
+}) {
     if (!period) {
-        return "-";
+        return (
+            <span className="text-sm text-slate-400">
+                Не настроен
+            </span>
+        );
     }
 
 
+    const usedBytes =
+        Number(period.usedBytes);
+
+    const limitBytes =
+        period.limitBytes
+            ? Number(period.limitBytes)
+            : null;
+
     const usedGb =
-        Number(period.usedBytes) /
-        1024 ** 3;
+        usedBytes / 1024 ** 3;
 
 
-    if (!period.limitBytes) {
-        return `${usedGb.toFixed(2)} GB`;
+    if (!limitBytes) {
+        return (
+            <span className="text-sm font-medium text-slate-700">
+                {formatTrafficGb(usedGb)}
+            </span>
+        );
     }
 
 
     const limitGb =
-        Number(period.limitBytes) /
-        1024 ** 3;
+        limitBytes / 1024 ** 3;
+
+    const percentage =
+        Math.min(
+            usedBytes /
+            limitBytes *
+            100,
+            100,
+        );
 
 
-    const percent =
-        limitGb > 0
-            ? usedGb / limitGb * 100
-            : 0;
+    const colorClass =
+        percentage >= 90
+            ? "bg-red-500"
+            : percentage >= 50
+                ? "bg-yellow-400"
+                : "bg-green-500";
+
+
+    const textColorClass =
+        percentage >= 90
+            ? "text-red-700"
+            : percentage >= 50
+                ? "text-yellow-700"
+                : "text-green-700";
 
 
     return (
-        `${usedGb.toFixed(2)} / ` +
-        `${limitGb.toFixed(0)} GB ` +
-        `(${percent.toFixed(1)}%)`
+        <div className="min-w-40">
+
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+
+                <span
+                    className={`text-sm font-medium ${textColorClass}`}
+                >
+                    {formatTrafficGb(usedGb)}
+                    {" / "}
+                    {formatTrafficGb(limitGb)}
+                </span>
+
+                <span
+                    className={`text-xs font-medium ${textColorClass}`}
+                >
+                    {percentage.toFixed(1)}%
+                </span>
+
+            </div>
+
+
+            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+
+                <div
+                    className={`h-full rounded-full transition-all ${colorClass}`}
+                    style={{
+                        width:
+                            `${percentage}%`,
+                    }}
+                />
+
+            </div>
+
+        </div>
     );
+}
+
+
+function formatTrafficGb(
+    value: number,
+): string {
+    if (value >= 100) {
+        return `${value.toFixed(0)} GB`;
+    }
+
+    if (value >= 10) {
+        return `${value.toFixed(1)} GB`;
+    }
+
+    return `${value.toFixed(2)} GB`;
 }
 
 
