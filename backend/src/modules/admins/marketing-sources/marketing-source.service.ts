@@ -11,6 +11,8 @@ import {
 } from "./marketing-source.types";
 import MarketingSource from "../../marketing-sources/marketing-source.model";
 import User from "../../users/user.model";
+import Order from "../../orders/order.model";
+import Payment from "../../payments/payment.model";
 
 
 class MarketingSourceService {
@@ -32,7 +34,8 @@ class MarketingSourceService {
 
     private serialize(
         source: MarketingSource,
-        usersCount?: number
+        usersCount?: number,
+        paidUsersCount?: number
     ) {
 
         return {
@@ -51,6 +54,18 @@ class MarketingSourceService {
 
             users_count:
             usersCount,
+
+            paid_users_count:
+            paidUsersCount,
+
+            conversion_rate:
+            usersCount
+                ? Math.round(
+                    ((paidUsersCount ?? 0) /
+                        usersCount) *
+                    10000
+                ) / 100
+                : 0,
 
             created_at:
             source.created_at,
@@ -127,9 +142,15 @@ class MarketingSourceService {
                             });
 
 
+                        const paidUsersCount =
+                            await this.getPaidUserIds(
+                                source.id
+                            );
+
                         return this.serialize(
                             source,
-                            usersCount
+                            usersCount,
+                            paidUsersCount.size
                         );
                     }
                 )
@@ -164,9 +185,15 @@ class MarketingSourceService {
             });
 
 
+        const paidUsersCount =
+            await this.getPaidUserIds(
+                source.id
+            );
+
         return this.serialize(
             source,
-            usersCount
+            usersCount,
+            paidUsersCount.size
         );
     }
 
@@ -474,6 +501,11 @@ class MarketingSourceService {
             });
 
 
+        const paidUserIds =
+            await this.getPaidUserIds(
+                id
+            );
+
         return {
             source:{
                 id:source.id,
@@ -482,8 +514,97 @@ class MarketingSourceService {
                 type:source.type,
             },
 
-            users,
+            users:
+                users.map((user) => ({
+                    ...user.toJSON(),
+                    has_paid:
+                        paidUserIds.has(
+                            user.id
+                        ),
+                })),
         };
+    }
+
+    private async getPaidUserIds(
+        marketingSourceId: number
+    ): Promise<Set<number>> {
+        const users =
+            await User.findAll({
+                where: {
+                    marketing_source_id:
+                        marketingSourceId,
+                },
+                attributes: [
+                    "id",
+                ],
+            });
+
+        const userIds =
+            users.map(
+                (user) => user.id
+            );
+
+        if (!userIds.length) {
+            return new Set();
+        }
+
+        const orders =
+            await Order.findAll({
+                where: {
+                    user_id: {
+                        [Op.in]:
+                            userIds,
+                    },
+                },
+                attributes: [
+                    "id",
+                    "user_id",
+                ],
+            });
+
+        if (!orders.length) {
+            return new Set();
+        }
+
+        const orderIds =
+            orders.map(
+                (order) => order.id
+            );
+
+        const paidPayments =
+            await Payment.findAll({
+                where: {
+                    status: "paid",
+                    order_id: {
+                        [Op.in]:
+                            orderIds,
+                    },
+                },
+                attributes: [
+                    "order_id",
+                ],
+            });
+
+        const paidOrderIds =
+            new Set(
+                paidPayments.map(
+                    (payment) =>
+                        payment.order_id
+                )
+            );
+
+        return new Set(
+            orders
+                .filter((order) =>
+                    paidOrderIds.has(
+                        order.id
+                    )
+                )
+                .map(
+                    (order) =>
+                        order.user_id
+                )
+        );
     }
 }
 
