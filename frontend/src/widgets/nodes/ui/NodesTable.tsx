@@ -157,24 +157,7 @@ const NodesTable = ({
 
                             <TableCell>
                                 <NodeTrafficProgress
-                                    period={{
-                                        id: 3,
-                                        nodeId: 3,
-
-                                        startedAt: "2026-10-01T00:00:00.000Z",
-                                        endsAt: "2026-11-01T00:00:00.000Z",
-
-                                        limitBytes: String(
-                                            500 * 1024 ** 3
-                                        ),
-
-                                        usedBytes: String(
-                                            475 * 1024 ** 3
-                                        ),
-
-                                        createdAt: "2026-10-01T00:00:00.000Z",
-                                        updatedAt: "2026-10-05T00:00:00.000Z",
-                                    }}
+                                    period={node.trafficPeriod}
                                 />
                             </TableCell>
 
@@ -216,18 +199,6 @@ const NodesTable = ({
         </TableContainer>
     );
 };
-
-// id: number;
-// nodeId: number;
-//
-// startedAt: string;
-// endsAt: string | null;
-//
-// limitBytes: string | null;
-// usedBytes: string;
-//
-// createdAt: string;
-// updatedAt: string;
 
 function NodeTrafficProgress({
                                  period,
